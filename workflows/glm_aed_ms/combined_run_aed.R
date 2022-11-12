@@ -7,7 +7,7 @@ Sys.setenv("AWS_DEFAULT_REGION" = "s3",
 
 lake_directory <- here::here()
 
-starting_index <- 83
+starting_index <- 1
 
 files.sources <- list.files(file.path(lake_directory, "R"), full.names = TRUE)
 sapply(files.sources, source)
@@ -40,6 +40,7 @@ configure_run_file <- "configure_aed_run.yml"
 
 j = 1
 sites <- "fcre"
+use_s3 <- TRUE
 
 #function(i, sites, lake_directory, sim_names, config_files, )
 
@@ -53,6 +54,9 @@ if(starting_index == 1){
   if(file.exists(file.path(lake_directory, "restart", sites[j], sim_names, configure_run_file))){
     unlink(file.path(lake_directory, "restart", sites[j], sim_names, configure_run_file))
   }
+  if(use_s3){
+    FLAREr::delete_restart(sites[j], sim_names)
+  }
 }
 
 ##'
@@ -60,7 +64,7 @@ if(starting_index == 1){
 config_obs <- FLAREr::initialize_obs_processing(lake_directory, observation_yml = "observation_processing.yml", config_set_name = config_set_name)
 config <- FLAREr::set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name)
 
-use_s3 <- FALSE
+
 
 #' Clone or pull from data repositories
 
