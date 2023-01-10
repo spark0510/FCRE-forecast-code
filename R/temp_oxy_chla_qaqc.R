@@ -80,6 +80,10 @@ temp_oxy_chla_qaqc <- function(realtime_file,
     start <- log$TIMESTAMP_start[i]
     end <- log$TIMESTAMP_end[i]
 
+    if(is.na(end)){
+      end <- length(catdata$DateTime) + 1
+    }
+
     # get indices of columns affected by maintenance
     if(grepl("^\\d+$", log$colnumber[i])) # single num
     {
