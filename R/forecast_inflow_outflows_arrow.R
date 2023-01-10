@@ -66,7 +66,7 @@ forecast_inflows_outflows_arrow <- function(inflow_obs,
 
     run_date <- lubridate::as_date(noaa_met$datetime[1])
     run_cycle <- lubridate::hour(noaa_met$datetime[1])
-    if(run_cycle < 10){run_cycle <- paste0("0",run_cycle)}
+    #if(run_cycle < 10){run_cycle <- paste0("0",run_cycle)}
 
     run_dir <- file.path(inflow_model, lake_name_code, run_date, run_cycle)
 
@@ -78,8 +78,8 @@ forecast_inflows_outflows_arrow <- function(inflow_obs,
 
     if(length(init_flow_temp$FLOW) == 0){
       previous_run_date <- run_date - lubridate::days(1)
-      previous_end_date <- end_date - lubridate::days(1)
-      previous_run_dir <- file.path(inflow_model, lake_name_code, previous_run_date, run_cycle)
+      #previous_end_date <- end_date - lubridate::days(1)
+      previous_run_dir <- file.path(inflow_model, lake_name_code, run_cycle, previous_run_date)
 
 
       if(use_s3_inflow){
