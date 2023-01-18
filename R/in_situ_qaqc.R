@@ -47,53 +47,38 @@ in_situ_qaqc <- function(insitu_obs_fname,
       d_ch4 <- extract_ch4(fname = ch4_fname,
                            input_file_tz = "EST",
                            focal_depths = config$focal_depths)
+
+      str(d)
+      str(d_ch4)
       d <- rbind(d,d_ch4)
     }
   }
 
+  message("here1")
+  cuts <- tibble::tibble(cuts = as.integer(factor(config$depths_bins_top)),
+                 depth = config$depths_bins_top)
 
-  first_day <- lubridate::as_datetime(paste0(lubridate::as_date(min(d$timestamp)) - lubridate::days(1), " ", config$averaging_period_starting_hour))
-  last_day <- lubridate::as_datetime(paste0(lubridate::as_date(max(d$timestamp)) + lubridate::days(1), "",config$averaging_period_starting_hour ))
-    
-  full_time_local <- seq(first_day, last_day, by = "1 day")
-
-  d_clean <- NULL
-
-
-  for(i in 1:length(config$target_variable)){
-    
-
-    print(paste0("Extracting ",config$target_variable[i]))
-    #depth_breaks <- sort(c(bins1, bins2))
-    time_breaks <- seq(first_day, last_day, by = config$averaging_period[i])
-
-    d_curr <- d %>%
-      dplyr::filter(variable == config$target_variable[i],
-                    method %in% config$measurement_methods[[i]]) %>%
-      dplyr::mutate(time_class = cut(timestamp, breaks = time_breaks, labels = FALSE)) %>%
-      dplyr::group_by(time_class, depth) %>%
-      dplyr::summarize(value = mean(value, na.rm = TRUE), .groups = "drop") %>%
-      dplyr::mutate(datetime = time_breaks[time_class]) %>%
-      dplyr::mutate(variable = config$target_variable[i]) %>%
-      dplyr::select(datetime, depth, variable, value) %>%
-      dplyr::mutate(date = lubridate::as_date(datetime))
-
-    if(config$averaging_period[i] == "1 hour"){
-      d_curr <- d_curr %>%
-      dplyr::mutate(hour = lubridate::hour(datetime)) %>%
-      dplyr::filter(hour == lubridate::hour(first_day))
-    }else{
-      d_curr <- d_curr %>%
-        dplyr::mutate(hour = NA) %>%
-        dplyr::mutate(hour = as.numeric(hour))
-    }
-
-    d_curr <- d_curr %>% dplyr::select(-datetime)
-
-    d_clean <- rbind(d_clean,  d_curr)
+  methods <- NULL
+  for(i in 1:length(config$measurement_methods)){
+    methods <- c(methods, paste(names(config$measurement_methods)[i], unlist(config$measurement_methods[[i]]), sep = "_"))
   }
 
-  d_clean <- d_clean %>% tidyr::drop_na(value)
+  message("here2")
+
+  d_clean <- d |>
+    dplyr::mutate(method = paste(variable, method, sep = "_")) |>
+    dplyr::mutate(cuts = cut(depth, breaks = config$depths_bins_top, include.lowest = TRUE, right = FALSE, labels = FALSE)) |>
+    dplyr::mutate(time = lubridate::as_date(time) + lubridate::hours(hour(time))) |>
+    dplyr::filter(lubridate::hour(time) == 0) |>
+    dplyr::filter(method %in% methods) |>
+    dplyr::group_by(cuts, variable, time) |>
+    dplyr::summarize(observed = mean(observed, na.rm = TRUE), .groups = "drop") |>
+    dplyr::left_join(cuts) |>
+    dplyr::select(time, depth, observed, variable) |>
+    tidyr::drop_na(observed)
+
+  message("here3")
+
 
   if(!is.na(secchi_fname)){
 
@@ -101,22 +86,25 @@ in_situ_qaqc <- function(insitu_obs_fname,
                                input_file_tz = "EST",
                                focal_depths = config$focal_depths)
 
-    d_secchi <- d_secchi %>%
-      dplyr::mutate(date = lubridate::as_date(timestamp)) %>%
-      dplyr::mutate(hour = NA) %>%
-      dplyr::select(-timestamp)
+    d_secchi <- d_secchi |>
+      dplyr::mutate(time = as_datetime(lubridate::as_date(time)))
+
 
     d_clean <- rbind(d_clean,d_secchi)
   }
 
-  d_clean <- d_clean %>% select(date, hour, depth, value, variable)
+  message("here4")
 
-  d_clean$value <- round(d_clean$value, digits = 4)
+
+  d_clean$site_id <- "fcre"
+
+  d_clean <- d_clean %>% dplyr::select(time, site_id, depth, observed, variable)
+
+  d_clean$observed <- round(d_clean$observed, digits = 4)
 
   if(!dir.exists(dirname(cleaned_insitu_file))){
     dir.create(dirname(cleaned_insitu_file), recursive = TRUE)
   }
-
 
   readr::write_csv(d_clean, cleaned_insitu_file)
 

@@ -1,7 +1,5 @@
 #renv::restore()
-
 Sys.setenv(USE_HTTPS = "TRUE")
-
 library(tidyverse)
 library(lubridate)
 
@@ -65,17 +63,6 @@ inflow_outflow_files <- FLAREr::create_glm_inflow_outflow_files(inflow_file_dir 
                                                                 config = config,
                                                                 state_names = states_config$state_names)
 
-management <- NULL
-
-if(config$model_settings$model_name == "glm_aed"){
-
-  https_file <- "https://raw.githubusercontent.com/cayelan/FCR-GLM-AED-Forecasting/master/FCR_2013_2019GLMHistoricalRun_GLMv3beta/inputs/FCR_SSS_inflow_2013_2021_20211102_allfractions_2DOCpools.csv"
-  download.file(https_file,
-                file.path(config$file_path$execute_directory, basename(https_file)))
-
-  inflow_outflow_files$inflow_file_name <- cbind(inflow_outflow_files$inflow_file_name, rep(file.path(config$file_path$execute_directory,basename(https_file)), length(inflow_outflow_files$inflow_file_name)))
-}
-
 #Create observation matrix
 obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long = file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")),
                                  obs_config = obs_config,
@@ -90,7 +77,6 @@ init <- FLAREr::generate_initial_conditions(states_config,
                                             pars_config,
                                             obs,
                                             config,
-                                            restart_file = config$run_config$restart_file,
                                             historical_met_error = met_out$historical_met_error)
 #Run EnKF
 da_forecast_output <- FLAREr::run_da_forecast(states_init = init$states,
@@ -107,7 +93,7 @@ da_forecast_output <- FLAREr::run_da_forecast(states_init = init$states,
                                               pars_config = pars_config,
                                               states_config = states_config,
                                               obs_config = obs_config,
-                                              management,
+                                              management = NULL,
                                               da_method = config$da_setup$da_method,
                                               par_fit_method = config$da_setup$par_fit_method)
 
@@ -116,6 +102,30 @@ da_forecast_output <- FLAREr::run_da_forecast(states_init = init$states,
 saved_file <- FLAREr::write_forecast_netcdf(da_forecast_output = da_forecast_output,
                                             forecast_output_directory = config$file_path$forecast_output_directory,
                                             use_short_filename = TRUE)
+
+forecast_file <- FLAREr::write_forecast_csv(da_forecast_output = da_forecast_output,
+                                            forecast_output_directory = config$file_path$forecast_output_directory,
+                                            use_short_filename = TRUE)
+
+dir.create(file.path(lake_directory, "scores", config$location$site_id, config$run_config$sim_name), recursive = TRUE, showWarnings = FALSE)
+score_file <- FLAREr::generate_forecast_score(targets_file = file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")),
+                                              forecast_file = forecast_file,
+                                              output_directory = file.path(lake_directory, "scores", config$location$site_id, config$run_config$sim_name))
+
+if(config$run_config$use_s3){
+  aws.s3::put_object(file = forecast_file,
+                     object = file.path(config$location$site_id, config$run_config$sim_name, basename(forecast_file)),
+                     bucket = "forecasts-csv",
+                     region = Sys.getenv("AWS_DEFAULT_REGION"),
+                     use_https = as.logical(Sys.getenv("USE_HTTPS")))
+  aws.s3::put_object(file = score_file,
+                     object = file.path(config$location$site_id, config$run_config$sim_name, basename(score_file)),
+                     bucket = "scores",
+                     region = Sys.getenv("AWS_DEFAULT_REGION"),
+                     use_https = as.logical(Sys.getenv("USE_HTTPS")))
+}
+
+
 
 #Create EML Metadata
 eml_file_name <- FLAREr::create_flare_metadata(file_name = saved_file,

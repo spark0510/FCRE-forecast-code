@@ -39,7 +39,7 @@ inflow_qaqc <- function(realtime_file,
 
   ##Step 2: Read in historical flow data, clean, and aggregate to daily mean##
 
-  flow <- readr::read_csv(qaqc_file, guess_max = 1000000, col_types = readr::cols()) %>%
+  flow <- readr::read_csv(qaqc_file, guess_max = 1000000, show_col_types = FALSE) %>%
     dplyr::rename("timestamp" = DateTime) %>%
     dplyr::mutate(timestamp = lubridate::as_datetime(timestamp, tz = input_file_tz),
                   timestamp = lubridate::with_tz(timestamp, tzone = "UTC")) %>%
@@ -74,7 +74,7 @@ inflow_qaqc <- function(realtime_file,
   #aggregate to daily mean.##
 
   if(!is.na(realtime_file)){
-    inflow_realtime <- read_csv(realtime_file, skip=4, col_names = F, col_types = readr::cols())
+    inflow_realtime <- read_csv(realtime_file, skip=4, col_names = F, show_col_types = FALSE)
     inflow_realtime_headers <- read.csv(realtime_file, skip=1, header = F, nrows= 1, as.is=T)
     colnames(inflow_realtime) <- inflow_realtime_headers
     inflow_realtime <- inflow_realtime %>%
@@ -111,7 +111,7 @@ inflow_qaqc <- function(realtime_file,
 
   if(!is.na(nutrients_file)){
 
-    FCRchem <- readr::read_csv(nutrients_file) %>%
+    FCRchem <- readr::read_csv(nutrients_file, show_col_types = FALSE) %>%
       dplyr::select(Reservoir:DIC_mgL) %>%
       dplyr::filter(Reservoir == "FCR") %>%
       dplyr::filter(Site == 100) %>% #inflow site code
@@ -123,7 +123,7 @@ inflow_qaqc <- function(realtime_file,
       dplyr::filter(TP_ugL < 100) %>% #remove outliers
       dplyr::select(time:DIC_mgL)
 
-    silica <- readr::read_csv(silica_file) %>%
+    silica <- readr::read_csv(silica_file, show_col_types = FALSE) %>%
       dplyr::filter(Reservoir == "FCR") %>%
       dplyr::filter(Site == 100) %>% #100 = weir inflow site
       select(DateTime, DRSI_mgL) %>%
@@ -134,7 +134,7 @@ inflow_qaqc <- function(realtime_file,
 
     all_data <- left_join(inflow_combined, FCRchem, by = "time")
 
-    ghg <- readr::read_csv(co2_ch4) %>%
+    ghg <- readr::read_csv(co2_ch4, show_col_types = FALSE) %>%
       dplyr::filter(Reservoir == "FCR") %>%
       dplyr::filter(Site == 100) %>% #weir inflow
       dplyr::select(DateTime, ch4_umolL) %>%

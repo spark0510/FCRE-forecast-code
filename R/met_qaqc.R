@@ -33,54 +33,11 @@ met_qaqc <- function(realtime_file,
     d1$TIMESTAMP <- lubridate::with_tz(TIMESTAMP_in,tz = "UTC")
 
     d2 <- readr::read_csv(qaqc_file,
-                          col_types = list(Reservoir = readr::col_character(),
-                                           Site  = readr::col_character(),
-                                           DateTime = readr::col_datetime(format = ""),
-                                           Record = readr::col_integer(),
-                                           CR3000_Batt_V = readr::col_double(),
-                                           CR3000Panel_temp_C  = readr::col_double(),
-                                           PAR_Average_umol_s_m2  = readr::col_double(),
-                                           PAR_Total_mmol_m2  = readr::col_double(),
-                                           BP_Average_kPa  = readr::col_double(),
-                                           AirTemp_Average_C  = readr::col_double(),
-                                           RH_percent  = readr::col_double(),
-                                           Rain_Total_mm  = readr::col_double(),
-                                           WindSpeed_Average_m_s  = readr::col_double(),
-                                           WindDir_degrees  = readr::col_double(),
-                                           ShortwaveRadiationUp_Average_W_m2  = readr::col_double(),
-                                           ShortwaveRadiationDown_Average_W_m2  = readr::col_double(),
-                                           InfaredRadiationUp_Average_W_m2  = readr::col_double(),
-                                           InfaredRadiationDown_Average_W_m2  = readr::col_double(),
-                                           Albedo_Average_W_m2  = readr::col_double(),
-                                           Flag_PAR_Average_umol_s_m2 = readr::col_integer(),
-                                           Note_PAR_Average_umol_s_m2  = readr::col_character(),
-                                           Flag_PAR_Total_mmol_m2 = readr::col_integer(),
-                                           Note_PAR_Total_mmol_m2  = readr::col_character(),
-                                           Flag_BP_Average_kPa = readr::col_integer(),
-                                           Note_BP_Average_kPa  = readr::col_character(),
-                                           Flag_AirTemp_Average_C = readr::col_integer(),
-                                           Note_AirTemp_Average_C  = readr::col_character(),
-                                           Flag_RH_percent = readr::col_integer(),
-                                           Note_RH_percent  = readr::col_character(),
-                                           Flag_Rain_Total_mm = readr::col_integer(),
-                                           Note_Rain_Total_mm  = readr::col_character(),
-                                           Flag_WindSpeed_Average_m_s = readr::col_integer(),
-                                           Note_WindSpeed_Average_m_s  = readr::col_character(),
-                                           Flag_WindDir_degrees = readr::col_integer(),
-                                           Note_WindDir_degrees  = readr::col_character(),
-                                           Flag_ShortwaveRadiationUp_Average_W_m2 = readr::col_integer(),
-                                           Note_ShortwaveRadiationUp_Average_W_m2  = readr::col_character(),
-                                           Flag_ShortwaveRadiationDown_Average_W_m2 = readr::col_integer(),
-                                           Note_ShortwaveRadiationDown_Average_W_m2  = readr::col_character(),
-                                           Flag_InfaredRadiationUp_Average_W_m2 = readr::col_integer(),
-                                           Note_InfaredRadiationUp_Average_W_m2  = readr::col_character(),
-                                           Flag_InfaredRadiationDown_Average_W_m2 = readr::col_integer(),
-                                           Note_InfaredRadiationDown_Average_W_m2  = readr::col_character(),
-                                           Flag_Albedo_Average_W_m2 = readr::col_integer(),
-                                           Note_Albedo_Average_W_m2  = readr::col_character()))
+                          show_col_types = FALSE, progress = FALSE)
 
 
     TIMESTAMP_in <- lubridate::force_tz(d2$DateTime, tzone = input_file_tz)
+
 
     d2$TIMESTAMP <- lubridate::with_tz(TIMESTAMP_in,tz = "UTC")
 
@@ -145,6 +102,31 @@ met_qaqc <- function(realtime_file,
   maxTempC = 41 # an upper bound of realistic temperature for the study site in deg C
   minTempC = -24 # an lower bound of realistic temperature for the study site in deg C
 
+  equation_of_time <- function(doy) {
+    stopifnot(doy <= 367)
+    f      <- pi / 180 * (279.5 + 0.9856 * doy)
+    et     <- (-104.7 * sin(f) + 596.2 * sin(2 * f) + 4.3 *
+                 sin(4 * f) - 429.3 * cos(f) - 2 *
+                 cos(2 * f) + 19.3 * cos(3 * f)) / 3600  # equation of time -> eccentricity and obliquity
+    return(et)
+  }
+
+
+  cos_solar_zenith_angle <- function(doy, lat, lon, dt, hr) {
+    et <- equation_of_time(doy)
+    merid  <- floor(lon / 15) * 15
+    merid[merid < 0] <- merid[merid < 0] + 15
+    lc     <- (lon - merid) * -4/60  ## longitude correction
+    tz     <- merid / 360 * 24  ## time zone
+    midbin <- 0.5 * dt / 86400 * 24  ## shift calc to middle of bin
+    t0   <- 12 + lc - et - tz - midbin  ## solar time
+    h    <- pi/12 * (hr - t0)  ## solar hour
+    dec  <- -23.45 * pi / 180 * cos(2 * pi * (doy + 10) / 365)  ## declination
+    cosz <- sin(lat * pi / 180) * sin(dec) + cos(lat * pi / 180) * cos(dec) * cos(h)
+    cosz[cosz < 0] <- 0
+    return(cosz)
+  }
+
   d <- d %>%
     dplyr::mutate(ShortWave = ifelse(ShortWave < 0, 0, ShortWave),
                   RelHum = ifelse(RelHum < 0, 0, RelHum),
@@ -159,7 +141,12 @@ met_qaqc <- function(realtime_file,
     mutate(day = lubridate::day(time),
            year = lubridate::year(time),
            hour = lubridate::hour(time),
-           month = lubridate::month(time)) %>%
+           month = lubridate::month(time),
+           minute = lubridate::minute(time)) %>%
+    #AirTemp = ifelse(minute <= 10, AirTemp, NA),
+    #RelHum = ifelse(minute <= 10, RelHum, NA),
+    #WindSpeed = ifelse(minute <= 10, WindSpeed, NA),
+    #pressure = ifelse(minute <= 10, pressure, NA)) %>%
     group_by(day, year, hour, month) %>%
     summarize(ShortWave = mean(ShortWave, na.rm = TRUE),
               LongWave = mean(LongWave, na.rm = TRUE),
@@ -176,6 +163,29 @@ met_qaqc <- function(realtime_file,
     dplyr::select(time,ShortWave,LongWave,AirTemp,RelHum,WindSpeed,Rain,pressure) %>%
     arrange(time)
 
+  d <- d  %>%
+    mutate(hr = lubridate::hour(time),
+           doy = lubridate::yday(time) + hr/24.)
+
+  dt <- median(diff(d$doy)) * 86400 # average number of seconds in time interval
+  d$hr <- (d$doy - floor(d$doy)) * 24 # hour of day for each element of doy
+  lat <- 37.27
+  lon <- 360-79.9
+  ## calculate potential radiation
+  d$cosz <- cos_solar_zenith_angle(doy = d$doy, lat, lon, dt, hr = d$hr)
+  d$rpot <- 1366 * d$cosz
+
+  d |>
+    select(time, ShortWave, rpot) |>
+    pivot_longer(cols = -time, names_to = "variable", values_to = "value") |>
+    mutate(hour = hour(time)) |>
+    ggplot(aes(x = time, y = value, color = variable)) +
+    geom_point() +
+    facet_grid(~hour)
+
+  d <- d %>%
+    mutate(ShortWave = ifelse(ShortWave > rpot, NA, ShortWave))
+
   d <- d %>%
     rename(surface_downwelling_shortwave_flux_in_air = ShortWave,
            surface_downwelling_longwave_flux_in_air = LongWave,
@@ -189,15 +199,14 @@ met_qaqc <- function(realtime_file,
     mutate(air_temperature = air_temperature + 273.15,
            relative_humidity = relative_humidity / 100)
 
-
   #Note that mm hr-1 is the same as kg m2 hr-1. Converting to kg m2 s-1
   d$precipitation_flux <- d$precipitation_flux / (60 * 60)
 
   d$air_pressure <- d$air_pressure * 1000
 
   d$specific_humidity <-  rh2qair(rh = d$relative_humidity,
-                                                  T = d$air_temperature,
-                                                  press = d$air_pressure)
+                                  T = d$air_temperature,
+                                  press = d$air_pressure)
 
   d <- d %>%
     select(time, air_temperature, air_pressure, relative_humidity, surface_downwelling_longwave_flux_in_air, surface_downwelling_shortwave_flux_in_air, precipitation_flux, specific_humidity, wind_speed)
@@ -209,8 +218,8 @@ met_qaqc <- function(realtime_file,
 
   d$time <- lubridate::with_tz(d$time, tzone = "UTC")
 
-  d <- d %>%
-    tidyr::drop_na()
+  #d <- d %>%
+  #  tidyr::drop_na()
 
   if(!is.null(nldas)){
 
@@ -244,20 +253,41 @@ met_qaqc <- function(realtime_file,
 
   }else{
 
+    doy_mean <- d %>%
+      mutate(doy = yday(time),
+             hour = hour(time)) %>%
+      group_by(doy, hour) %>%
+      summarize(filled_shortwave = mean(surface_downwelling_shortwave_flux_in_air, na.rm = TRUE),
+                filled_longwave = mean(surface_downwelling_longwave_flux_in_air, na.rm = TRUE),
+                filled_temp = mean(air_temperature, na.rm = TRUE),
+                filled_relative_humidity = mean(relative_humidity, na.rm = TRUE),
+                filled_precip = mean(precipitation_flux, na.rm = TRUE),
+                filled_specific_humidity = mean(specific_humidity, na.rm = TRUE),
+                filled_wind_speed = mean(wind_speed, na.rm = TRUE),
+                filled_air_press = mean(air_pressure, na.rm = TRUE),
+                .groups = "drop")
+
+
     t <- seq(min(d$time), max(d$time), by = "1 hour")
     cont_time <- tibble(time = t)
 
-    d_full <- dplyr::left_join(cont_time, d, by = "time")
+    d_full <- dplyr::left_join(cont_time, d, by = "time") %>%
+      mutate(doy = yday(time),
+             hour = hour(time)) %>%
+      left_join(doy_mean, by = c("doy","hour"))
 
     d_full <- d_full %>%
-      mutate(air_temperature = imputeTS::na_interpolation(air_temperature, option = "linear"),
-             air_pressure = imputeTS::na_interpolation(air_pressure, option = "linear"),
-             relative_humidity = imputeTS::na_interpolation(relative_humidity, option = "linear"),
-             surface_downwelling_longwave_flux_in_air = imputeTS::na_interpolation(surface_downwelling_longwave_flux_in_air, option = "linear"),
-             surface_downwelling_shortwave_flux_in_air = imputeTS::na_interpolation(surface_downwelling_shortwave_flux_in_air, option = "linear"),
-             precipitation_flux = imputeTS::na_interpolation(precipitation_flux, option = "linear"),
-             specific_humidity = imputeTS::na_interpolation(specific_humidity, option = "linear"),
-             wind_speed = imputeTS::na_interpolation(wind_speed, option = "linear"))
+      mutate(surface_downwelling_shortwave_flux_in_air = ifelse(is.na(surface_downwelling_shortwave_flux_in_air), filled_shortwave, surface_downwelling_shortwave_flux_in_air),
+             surface_downwelling_longwave_flux_in_air= ifelse(is.na(surface_downwelling_longwave_flux_in_air), filled_longwave, surface_downwelling_longwave_flux_in_air),
+             air_temperature = ifelse(is.na(air_temperature), filled_temp, air_temperature),
+             relative_humidity = ifelse(is.na(relative_humidity), filled_relative_humidity, relative_humidity),
+             precipitation_flux = ifelse(is.na(precipitation_flux), filled_precip, precipitation_flux),
+             specific_humidity = ifelse(is.na(specific_humidity), filled_specific_humidity, specific_humidity),
+             wind_speed = ifelse(is.na(wind_speed), filled_wind_speed, wind_speed),
+             air_pressure = ifelse(is.na(air_pressure), filled_air_press, air_pressure)) |>
+      mutate(surface_downwelling_shortwave_flux_in_air = ifelse(is.nan(surface_downwelling_shortwave_flux_in_air), 0, surface_downwelling_shortwave_flux_in_air))
+
+
   }
 
   lat <- 37.27
