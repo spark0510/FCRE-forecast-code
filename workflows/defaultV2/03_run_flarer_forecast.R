@@ -2,6 +2,8 @@
 library(tidyverse)
 library(lubridate)
 
+FLAREr:::ignore_sigpipe()
+
 if(file.exists("~/.aws")){
   warning(paste("Detected existing AWS credentials file in ~/.aws,",
                 "Consider renaming these so that automated upload will work"))
