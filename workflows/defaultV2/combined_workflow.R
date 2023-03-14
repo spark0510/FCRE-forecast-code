@@ -10,11 +10,13 @@ config_set_name <<- "defaultV2"
 
 config <- FLAREr::set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name)
 
+message("Generating targets")
+source(file.path("workflows", config_set_name, "01_generate_targets.R"))
+
 noaa_ready <- TRUE
 while(noaa_ready){
-
-  message("Generating targets")
-  source(file.path("workflows", config_set_name, "01_generate_targets.R"))
+  
+  config <- FLAREr::set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name)
 
   setwd(lake_directory)
 
