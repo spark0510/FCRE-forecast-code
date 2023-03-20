@@ -332,6 +332,6 @@ for(i in starting_index:nrow(sims)){
   rm(da_forecast_output)
   gc()
 
-  RCurl::getURL("https://hc-ping.com/4a9c9101-ab12-4f53-9736-24f9b1cffd63")
+  RCurl::getURL("https://hc-ping.com/0a0bd54c-8db0-4274-818c-9ef9759a206a")
 
 }
