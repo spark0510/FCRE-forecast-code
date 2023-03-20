@@ -138,7 +138,7 @@ for(i in starting_index:nrow(sims)){
   message(paste0("     Running model: ", sims$model[i]))
 
   model <- sims$model[i]
-  sim_names <- paste0(model)
+  sim_names <- paste0(model, '_reprocess')
 
   config <- FLAREr::set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name, sim_name = sim_names)
 
@@ -205,7 +205,6 @@ for(i in starting_index:nrow(sims)){
                                               use_forecast = TRUE,
                                               use_ler_vars = use_ler_vars)
 
-  met_out$filenames <- met_out$filenames[!stringr::str_detect(met_out$filenames, "31")]
 
   obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long = file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")),
                                    obs_config = obs_config,
