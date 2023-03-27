@@ -1,5 +1,7 @@
 #renv::restore()
 
+Sys.setenv(USE_HTTPS = "TRUE")
+
 library(tidyverse)
 library(lubridate)
 

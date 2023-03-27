@@ -45,6 +45,7 @@ print(start_dates)
 print(forecast_start_dates)
 j = 1
 sites <- "fcre"
+use_s3 <- TRUE
 
 #function(i, sites, lake_directory, sim_names, config_files, )
 
@@ -57,6 +58,9 @@ if(starting_index == 1){
   yaml::write_yaml(run_config, file = file.path(lake_directory, "configuration", config_set_name, configure_run_file))
   if(file.exists(file.path(lake_directory, "restart", sites[j], sim_names, configure_run_file))){
     unlink(file.path(lake_directory, "restart", sites[j], sim_names, configure_run_file))
+  }
+  if(use_s3){
+    FLAREr::delete_restart(sites[j], sim_names)
   }
 }
 
