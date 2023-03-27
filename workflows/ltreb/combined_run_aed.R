@@ -14,7 +14,7 @@ files.sources <- list.files(file.path(lake_directory, "R"), full.names = TRUE)
 sapply(files.sources, source)
 
 sim_names <- "ltreb"
-config_set_name <- "glm_aed_oxy"
+config_set_name <- "ltreb"
 
 config_files <- paste0("configure_flare_glm_aed.yml")
 
@@ -23,8 +23,9 @@ num_forecasts <- 52 * 2
 #num_forecasts <- 1#19 * 7 + 1
 days_between_forecasts <- 7
 forecast_horizon <- 16 #32
-starting_date <- as_date("2020-09-25")
-second_date <- as_date("2020-12-01") - days(days_between_forecasts)
+starting_date <- as_date("2021-03-27")
+#second_date <- as_date("2020-12-01") - days(days_between_forecasts)
+second_date <- as_date("2022-09-27") #- days(days_between_forecasts)
 #starting_date <- as_date("2018-07-20")
 #second_date <- as_date("2018-07-23") #- days(days_between_forecasts)
 #second_date <- as_date("2018-09-01") - days(days_between_forecasts)
@@ -165,10 +166,6 @@ FLAREr::put_targets(site_id = config_obs$site_id,
                     use_s3 = config$run_config$use_s3,
                     config)
 
-##` Download NOAA forecasts`
-
-message("    Downloading NOAA data")
-
 cycle <- "00"
 
 if(starting_index == 1){
@@ -308,7 +305,8 @@ for(i in starting_index:length(forecast_start_dates)){
                                            start_datetime = config$run_config$start_datetime,
                                            end_datetime = config$run_config$end_datetime,
                                            forecast_start_datetime = config$run_config$forecast_start_datetime,
-                                           forecast_horizon =  config$run_config$forecast_horizon)
+                                           forecast_horizon =  config$run_config$forecast_horizon,
+                                           secchi_sd = 0.1)
   #obs[ ,2:dim(obs)[2], ] <- NA
 
   states_config <- FLAREr::generate_states_to_obs_mapping(states_config, obs_config)
