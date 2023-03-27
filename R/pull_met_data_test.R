@@ -282,11 +282,11 @@ df_hourly_avgs <- df_date_col_select %>%
   mutate(DLWRF = mean(InfraredRadiationDown_Average_W_m2, na.rm=TRUE)) %>%
   mutate(DSWRF = mean(ShortwaveRadiationDown_Average_W_m2,na.rm=TRUE)) %>%
   ungroup() %>%
-  distinct(date,.keep_all = TRUE) %>%
-  select(date,doy,UGRD,VGRD,PRES,TMP,RH,APCP,DLWRF,DSWRF)
+  distinct(date, hour, .keep_all = TRUE) %>%
+  select(date,hour,doy,UGRD,VGRD,PRES,TMP,RH,APCP,DLWRF,DSWRF)
 
 df_met_long <- df_hourly_avgs %>%
-  gather(key = 'variable', value = 'prediction', -doy, -date) %>%
+  gather(key = 'variable', value = 'prediction', -doy, -date, -hour) %>%
   mutate(year = format(as.Date(date, format="%Y-%m-%d"),"%Y")) %>%
   filter(date > '2015-12-31') %>%
   filter(date < '2023-01-01')
@@ -301,8 +301,34 @@ df_met_long$parameter <- ifelse(df_met_long$year == '2021',6,df_met_long$paramet
 df_met_long$parameter <- ifelse(df_met_long$year == '2022',7,df_met_long$parameter)
 
 
+## ADD EXTRA COLUMNS
+df_met_long$site_id <- 'fcre'
+df_met_long$family <- 'ensemble'
+df_met_long$longitude <- '-79.83722'
+df_met_long$latitude <- '37.30315'
+
+df_met_long$height <- NA
+df_met_long$height <- ifelse(df_met_long$variable == 'UGRD','10 m above ground',df_met_long$height)
+df_met_long$height <- ifelse(df_met_long$variable == 'VGRD','10 m above ground',df_met_long$height)
+df_met_long$height <- ifelse(df_met_long$variable == 'PRES','surface',df_met_long$height)
+df_met_long$height <- ifelse(df_met_long$variable == 'TMP','2 m above ground',df_met_long$height)
+df_met_long$height <- ifelse(df_met_long$variable == 'RH','2 m above ground',df_met_long$height)
+df_met_long$height <- ifelse(df_met_long$variable == 'APCP','surface',df_met_long$height)
+df_met_long$height <- ifelse(df_met_long$variable == 'DLWRF','surface',df_met_long$height)
+df_met_long$height <- ifelse(df_met_long$variable == 'DSWRF','surface',df_met_long$height)
 
 
+date_store <- df_met_long %>%
+  mutate(month_day = format(as.Date(date, format="%Y-%m-%d"),"%m-%d")) %>%
+  select(month_day,hour,doy) %>%
+  distinct(doy, hour, .keep_all = TRUE)
+
+
+df_met_join <- date_store %>%
+  right_join(df_met_long, by=c('doy','hour'))
+
+## make list of doy values choose start times
+reference_date_list <- date_store[date_store$doy ==1 | date_store$doy %% 7 ==0,'doy'][[1]]
 
 # #save every year with rolling avg
 # df_2016 <- df_met_full %>% filter(date < '2017-01-01', date > '2015-12-31') %>% select(doy,avg_temp) %>%
