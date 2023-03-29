@@ -1,42 +1,13 @@
 library(tidyverse)
+library(lubridate)
 library(arrow)
 
-met_pull <- function(interest_var){
-#select_dates <- seq(as.Date("2022-05-01"), as.Date("2022-05-10"), by="days")
-
-select_dates <- as.Date("2022-05-01")
-for (day in select_dates){
-  date <- format(as.Date(day,origin="1970-01-01"))
-  #print(date)
-  s3_path <- paste0("drivers/noaa/gefs-v12-reprocess/stage1/0/",date,'/fcre')
-  s3 <- arrow::s3_bucket(s3_path, endpoint_override = "s3.flare-forecast.org", anonymous = TRUE)
-  df <- arrow::open_dataset(s3) %>% collect()
-
-  noon_df <- df %>%
-    mutate(time = format(as.POSIXct(datetime), format = "%H:%M")) %>%
-    filter(time == '12:00')#, variable == interest_var)
-
-  if (date == select_dates[1]){
-    df_build <- noon_df
-  }else{
-    df_build <- rbind(df_build,noon_df)
-  }
-
-}
-
-return(df_build)
-}
-
-
-
-s3 <- arrow::s3_bucket("drivers/noaa/gefs-v12-reprocess/stage2/parquet/0/2022-03-10/fcre", endpoint_override = 's3.ecoforecast.org', anonymous = TRUE)
-
+## use existing stage2 data as template
 s3 <- arrow::s3_bucket("drivers/noaa/gefs-v12/stage2/parquet/0", endpoint_override = "s3.flare-forecast.org", anonymous = TRUE)
 df_stage2 <- arrow::open_dataset(s3) %>% filter(site_id == "fcre", reference_datetime == lubridate::as_datetime('2021-03-01 00:00:00')) %>% collect()
 
 
-
-### Pull data from EDI
+## PULL EXISTING OBS MET DATA FROM EDI
 
 # Package ID: edi.389.7 Cataloging System:https://pasta.edirepository.org.
 # Data set title: Time series of high-frequency meteorological data at Falling Creek Reservoir, Virginia, USA 2015-2022.
@@ -237,26 +208,14 @@ dt1$Note_InfraredRadiationDown_Average_W_m2 <- as.factor(ifelse((trimws(as.chara
 dt1$Flag_Albedo_Average_W_m2 <- as.factor(ifelse((trimws(as.character(dt1$Flag_Albedo_Average_W_m2))==trimws("NA")),NA,as.character(dt1$Flag_Albedo_Average_W_m2)))
 dt1$Note_Albedo_Average_W_m2 <- as.factor(ifelse((trimws(as.character(dt1$Note_Albedo_Average_W_m2))==trimws("NA")),NA,as.character(dt1$Note_Albedo_Average_W_m2)))
 
-
-
-## read in "new" met data from github
+## READ IN RECENT DATA FROM GITHUB
 dt_new <- read.csv("https://raw.githubusercontent.com/FLARE-forecast/FCRE-data/fcre-metstation-data/FCRmet_L1.csv")
 
 
+# COMBINE EDI DATA WITH RECENT DATA
 df_met_full <- rbind(dt1,dt_new)
 
-
-# ## find indicies for every 7th day
-# doy[doy == 1 | doy %% 7 == 0]
-
-
-
-
-## Create forecasts from historical data
-library(zoo)
-library(smooth)
-library(lubridate)
-
+## CREATE DATE/TIME COLUMNS AND REMOVE COLUMNS WE DONT NEED
 df_date_col_select <- df_met_full %>%
   mutate(doy = as.numeric(strftime(DateTime, format = "%j"))) %>%
   mutate(date = format(as.Date(DateTime))) %>%
@@ -264,16 +223,11 @@ df_date_col_select <- df_met_full %>%
   select(-contains('Note')) %>%
   select(-contains('Flag')) %>%
   select(-c('Reservoir','Site','Albedo_Average_W_m2','CR3000Battery_V','CR3000Panel_Temp_C','PAR_umolm2s_Average','PAR_Total_mmol_m2','InfraredRadiationUp_Average_W_m2'))
-  #select()
-  # group_by(date) %>%
-  # mutate(avg_temp = mean(AirTemp_C_Average)) %>%
-  # ungroup() %>%
-  # distinct(date, .keep_all = TRUE) %>%
-  # select(date,time,doy, avg_temp)
 
+# REMOVE DATA OBJECTS WE DONT NEED TO CLEAR UP RAM SPACE
 rm(df_met_full)
 
-
+### RENAME VARIABLES AND CALCULATE HOURLY AVERAGES
 df_hourly_avgs <- df_date_col_select %>%
   group_by(date,hour) %>%
   mutate(northward_wind  = mean(WindSpeed_Average_m_s*cos(WindDir_degrees),na.rm=TRUE)) %>% #identify u component of wind
@@ -288,12 +242,14 @@ df_hourly_avgs <- df_date_col_select %>%
   distinct(date, hour, .keep_all = TRUE) %>%
   select(date,hour,doy,northward_wind,eastward_wind,air_pressure,air_temperature,relative_humidity,precipitation_flux,surface_downwelling_longwave_flux_in_air,surface_downwelling_shortwave_flux_in_air)
 
+### CONVERT DATA TO LONG FORMAT AND SUBSET TO INCLUDE ONLY FULL YEARS OF DATA
 df_met_long <- df_hourly_avgs %>%
   gather(key = 'variable', value = 'prediction', -doy, -date, -hour) %>%
   mutate(year = format(as.Date(date, format="%Y-%m-%d"),"%Y")) %>%
   filter(date > '2015-12-31') %>%
   filter(date < '2023-01-01')
 
+# ASSIGN ENSEMBLE MEMBER NUMBER FOR EACH YEAR
 df_met_long$parameter <- NA
 df_met_long$parameter <- ifelse(df_met_long$year == '2016',1,df_met_long$parameter)
 df_met_long$parameter <- ifelse(df_met_long$year == '2017',2,df_met_long$parameter)
@@ -303,7 +259,6 @@ df_met_long$parameter <- ifelse(df_met_long$year == '2020',5,df_met_long$paramet
 df_met_long$parameter <- ifelse(df_met_long$year == '2021',6,df_met_long$parameter)
 df_met_long$parameter <- ifelse(df_met_long$year == '2022',7,df_met_long$parameter)
 
-
 ## ADD EXTRA COLUMNS
 df_met_long$site_id <- 'fcre'
 df_met_long$family <- 'ensemble'
@@ -311,6 +266,7 @@ df_met_long$longitude <- '-79.83722'
 df_met_long$latitude <- '37.30315'
 df_met_long$forecast_valid <- NA
 
+## ASSIGN HEIGHT DESCRIPTIONS FOR EACH VARIABLE
 df_met_long$height <- NA
 df_met_long$height <- ifelse(df_met_long$variable == 'northward_wind','10 m above ground',df_met_long$height)
 df_met_long$height <- ifelse(df_met_long$variable == 'eastward_wind','10 m above ground',df_met_long$height)
@@ -321,15 +277,19 @@ df_met_long$height <- ifelse(df_met_long$variable == 'precipitation_flux','surfa
 df_met_long$height <- ifelse(df_met_long$variable == 'surface_downwelling_longwave_flux_in_air','surface',df_met_long$height)
 df_met_long$height <- ifelse(df_met_long$variable == 'surface_downwelling_shortwave_flux_in_air','surface',df_met_long$height)
 
+
+## CREATE BASE DATE TABLE FOR JOINING MET DATA
 date_store <- df_met_long %>%
-  #mutate(month_day = format(as.Date(date, format="%Y-%m-%d"),"%m-%d")) %>%
   select(hour,doy) %>%
   distinct(doy, hour, .keep_all = TRUE)
 
+## CREATE TABLE TO STORE DATE INFO FOR JOINING
 future_dates <- seq.Date(as.Date('2023-03-26'),as.Date('2024-03-25'),by='day')
 doy_match <- strftime(future_dates, format = "%j")
 date_match <- data.frame(new_dates = future_dates, doy = as.numeric(strftime(future_dates, format = "%j")))
 
+
+## JOIN MET DATA AND EXTRA DATE COLUMNS TO CREATE ANNUAL CLIMATE TABLE
 df_met_join <- date_store %>%
   right_join(df_met_long, by=c('doy','hour')) %>%
   right_join(date_match,by='doy') %>%
@@ -340,191 +300,6 @@ df_met_join <- date_store %>%
   select(site_id,prediction,variable, height, horizon, parameter, family, reference_datetime, start_date, forecast_valid, datetime, longitude, latitude) %>%
   arrange(datetime)
 
+## SAVE TABLE TO S3 STORAGE
 s3_write <- arrow::s3_bucket("drivers/noaa/clim-annual/stage2/parquet/0", endpoint_override = "s3.ecoforecast.org")
 arrow::write_dataset(df_met_join, s3_write, format = "parquet", partitioning = c("start_date", "site_id"), hive_style = FALSE)
-
-# ## make list of doy values choose start times
-# reference_date_list <- date_store[date_store$doy == 1 | date_store$doy %% 7 == 0,'doy'][[1]
-
-
-# #save every year with rolling avg
-# df_2016 <- df_met_full %>% filter(date < '2017-01-01', date > '2015-12-31') %>% select(doy,avg_temp) %>%
-#   #mutate(avg_temp_5ma = sma(avg_temp,n=5)) %>%
-#   mutate(avg_temp_5ra = zoo::rollmean(avg_temp,k=5,fill = NA)) %>%
-#   rename(temp_2016 = avg_temp_5ra) %>%
-#   select(doy,temp_2016)
-#
-#
-# df_2017 <- df_airtemp %>% filter(date < '2018-01-01', date > '2016-12-31') %>% select(doy,avg_temp) %>%
-#   mutate(avg_temp_5ra = zoo::rollmean(avg_temp,k=5,fill = NA)) %>%
-#   rename(temp_2017 = avg_temp_5ra) %>%
-#   select(doy,temp_2017)
-#
-# df_2018 <- df_airtemp %>% filter(date < '2019-01-01', date > '2017-12-31') %>% select(doy,avg_temp) %>%
-#   mutate(avg_temp_5ra = zoo::rollmean(avg_temp,k=5,fill = NA)) %>%
-#   rename(temp_2018 = avg_temp_5ra) %>%
-#   select(doy,temp_2018)
-#
-#
-# df_2019 <- df_airtemp %>% filter(date < '2020-01-01', date > '2018-12-31') %>% select(doy,avg_temp) %>%
-#   mutate(avg_temp_5ra = zoo::rollmean(avg_temp,k=5,fill = NA)) %>%
-#   rename(temp_2019 = avg_temp_5ra) %>%
-#   select(doy,temp_2019)
-#
-#
-# df_2020 <- df_airtemp %>% filter(date < '2021-01-01', date > '2019-12-31') %>% select(doy,avg_temp) %>%
-#   mutate(avg_temp_5ra = zoo::rollmean(avg_temp,k=5,fill = NA)) %>%
-#   rename(temp_2020 = avg_temp_5ra) %>%
-#   select(doy,temp_2020)
-#
-#
-# df_2021 <- df_airtemp %>% filter(date < '2022-01-01', date > '2020-12-31') %>% select(doy,avg_temp) %>%
-#   mutate(avg_temp_5ra = zoo::rollmean(avg_temp,k=5,fill = NA)) %>%
-#   rename(temp_2021 = avg_temp_5ra) %>%
-#   select(doy,temp_2021)
-#
-#
-# df_2022 <- df_airtemp %>% filter(date < '2023-01-01', date > '2021-12-31') %>% select(doy,avg_temp) %>%
-#   mutate(avg_temp_5ra = zoo::rollmean(avg_temp,k=5,fill = NA)) %>%
-#   rename(temp_2022 = avg_temp_5ra) %>%
-#   select(doy,temp_2022)
-#
-#
-# df_all_temp <- df_2020 %>%
-#   left_join(df_2021, by = 'doy') %>%
-#   left_join(df_2022, by = 'doy') %>%
-#   left_join(df_2019, by = 'doy') %>%
-#   left_join(df_2018, by = 'doy') %>%
-#   left_join(df_2017, by = 'doy') %>%
-#   left_join(df_2016, by = 'doy')
-#
-
-
-
-
-# ## Plot airtemp data
-# library(zoo)
-# library(smooth)
-#
-# df_airtemp <- dt1 %>%
-#   mutate(doy = as.numeric(strftime(DateTime, format = "%j"))) %>%
-#   mutate(date = format(as.Date(DateTime))) %>%
-#   mutate(time = format(as.POSIXct(DateTime), format = "%H:%M")) %>%
-#   group_by(date) %>%
-#   mutate(avg_temp = mean(AirTemp_C_Average)) %>%
-#   ungroup() %>%
-#   distinct(date, .keep_all = TRUE) %>%
-#   select(date,time,doy, avg_temp)
-#
-#
-# #save every year with rolling avg
-# df_2016 <- df_airtemp %>% filter(date < '2017-01-01', date > '2015-12-31') %>% select(doy,avg_temp) %>%
-#   #mutate(avg_temp_5ma = sma(avg_temp,n=5)) %>%
-#   mutate(avg_temp_5ra = zoo::rollmean(avg_temp,k=5,fill = NA)) %>%
-#   rename(temp_2016 = avg_temp_5ra) %>%
-#   select(doy,temp_2016)
-#
-#
-# df_2017 <- df_airtemp %>% filter(date < '2018-01-01', date > '2016-12-31') %>% select(doy,avg_temp) %>%
-#   mutate(avg_temp_5ra = zoo::rollmean(avg_temp,k=5,fill = NA)) %>%
-#   rename(temp_2017 = avg_temp_5ra) %>%
-#   select(doy,temp_2017)
-#
-# df_2018 <- df_airtemp %>% filter(date < '2019-01-01', date > '2017-12-31') %>% select(doy,avg_temp) %>%
-#   mutate(avg_temp_5ra = zoo::rollmean(avg_temp,k=5,fill = NA)) %>%
-#   rename(temp_2018 = avg_temp_5ra) %>%
-#   select(doy,temp_2018)
-#
-#
-# df_2019 <- df_airtemp %>% filter(date < '2020-01-01', date > '2018-12-31') %>% select(doy,avg_temp) %>%
-#   mutate(avg_temp_5ra = zoo::rollmean(avg_temp,k=5,fill = NA)) %>%
-#   rename(temp_2019 = avg_temp_5ra) %>%
-#   select(doy,temp_2019)
-#
-#
-# df_2020 <- df_airtemp %>% filter(date < '2021-01-01', date > '2019-12-31') %>% select(doy,avg_temp) %>%
-#   mutate(avg_temp_5ra = zoo::rollmean(avg_temp,k=5,fill = NA)) %>%
-#   rename(temp_2020 = avg_temp_5ra) %>%
-#   select(doy,temp_2020)
-#
-#
-# df_2021 <- df_airtemp %>% filter(date < '2022-01-01', date > '2020-12-31') %>% select(doy,avg_temp) %>%
-#   mutate(avg_temp_5ra = zoo::rollmean(avg_temp,k=5,fill = NA)) %>%
-#   rename(temp_2021 = avg_temp_5ra) %>%
-#   select(doy,temp_2021)
-#
-#
-# df_2022 <- df_airtemp %>% filter(date < '2023-01-01', date > '2021-12-31') %>% select(doy,avg_temp) %>%
-#   mutate(avg_temp_5ra = zoo::rollmean(avg_temp,k=5,fill = NA)) %>%
-#   rename(temp_2022 = avg_temp_5ra) %>%
-#   select(doy,temp_2022)
-#
-#
-# df_all_temp <- df_2020 %>%
-#   left_join(df_2021, by = 'doy') %>%
-#   left_join(df_2022, by = 'doy') %>%
-#   left_join(df_2019, by = 'doy') %>%
-#   left_join(df_2018, by = 'doy') %>%
-#   left_join(df_2017, by = 'doy') %>%
-#   left_join(df_2016, by = 'doy')
-#
-#
-# ### LOOK AT PRECIP DATA
-# df_precip <- dt1 %>%
-#   #mutate(doy = as.numeric(strftime(DateTime, format = "%j"))) %>%
-#   #mutate(date = format(as.Date(DateTime))) %>%
-#   #mutate(time = format(as.POSIXct(DateTime), format = "%H:%M")) %>%
-#   mutate(year = format(as.Date(DateTime, format="%d/%m/%Y"),"%Y")) %>%
-#   group_by(year) %>%
-#   mutate(total_annual_precip_mm = sum(Rain_Total_mm, na.rm = TRUE)) %>%
-#   ungroup() %>%
-#   distinct(year,total_annual_precip)
-#   #mutate(avg_precip = mean(Rain_Total_mm)) %>%
-#   #ungroup()
-#   #distinct(date, .keep_all = TRUE) %>%
-#   #select(date,time,doy, avg_precip)
-
-#df_long <- gather(df_all_temp,key='year',value = 'airtemp', -doy)
-
-# ggplot(df_long, aes(x=doy, y=airtemp, group=year, color=year)) +
-#   geom_line() +
-#   scale_color_manual(values = c("temp_2016" = 'darkred',
-#                                 'temp_2017' = 'steelblue',
-#                                 'temp_2018' = 'goldenrod4',
-#                                 'temp_2019' = 'springgreen4',
-#                                 'temp_2020' = 'chocolate2',
-#                                 'temp_2021' = 'grey25',
-#                                 'temp_2022' = 'black')) +
-#   scale_shape_manual(values = c("temp_2016" = 0,
-#                                 'temp_2017' = 1,
-#                                 'temp_2018' = 2,
-#                                 'temp_2019' = 5,
-#                                 'temp_2020' = 10,
-#                                 'temp_2021' = 7,
-#                                 'temp_2022' = 9)) +
-#   ggtitle('FCRE AirTemp (C)') +
-#   xlab('DOY') +
-#   ylab('Air Temp (C)')
-
-
-# ggplot(df_all_temp, aes(x=doy)) +
-#   geom_line(aes(y = temp_2016), color = "darkred") +
-#   geom_line(aes(y = temp_2017), color="steelblue", linetype="twodash") +
-#   geom_line(aes(y = temp_2018), color="goldenrod4", linetype="F1") +
-#   geom_line(aes(y = temp_2019), color="springgreen4", linetype="longdash") +
-#   geom_line(aes(y = temp_2020), color="chocolate2", linetype="dotdash") +
-#   geom_line(aes(y = temp_2021), color="grey25", linetype="solid") +
-#   geom_line(aes(y = temp_2022), color="black", linetype="dotted")
-
-
-# ggplot(df_all_temp, aes(x=doy)) +
-#   geom_point(aes(y = temp_2016), color = "darkred") +
-#   geom_point(aes(y = temp_2017), color="steelblue", shape=0) +
-#   geom_point(aes(y = temp_2018), color="goldenrod4", shape=1) +
-#   geom_point(aes(y = temp_2019), color="springgreen4", shape=2) +
-#   geom_point(aes(y = temp_2020), color="chocolate2", shape = 5) +
-#   geom_point(aes(y = temp_2021), color="grey25", shape=7) +
-#   geom_point(aes(y = temp_2022), color="black", shape=9) +
-#   labs(x = "DOY",
-#        y = "AirTemp (C)",
-#        color = "Legend")
