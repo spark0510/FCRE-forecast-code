@@ -301,5 +301,5 @@ df_met_join <- date_store %>%
   arrange(datetime)
 
 ## SAVE TABLE TO S3 STORAGE
-s3_write <- arrow::s3_bucket("drivers/noaa/clim-annual/stage2/parquet/0", endpoint_override = "s3.ecoforecast.org")
+s3_write <- arrow::s3_bucket("drivers/noaa/clim-annual/stage2/parquet/0", endpoint_override = "s3.flare-forecast.org")
 arrow::write_dataset(df_met_join, s3_write, format = "parquet", partitioning = c("start_date", "site_id"), hive_style = FALSE)
