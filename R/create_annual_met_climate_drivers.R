@@ -215,6 +215,7 @@ dt_new <- read.csv("https://raw.githubusercontent.com/FLARE-forecast/FCRE-data/f
 # COMBINE EDI DATA WITH RECENT DATA
 df_met_full <- rbind(dt1,dt_new)
 
+
 ## CREATE DATE/TIME COLUMNS AND REMOVE COLUMNS WE DONT NEED
 df_date_col_select <- df_met_full %>%
   mutate(doy = as.numeric(strftime(DateTime, format = "%j"))) %>%
@@ -238,16 +239,26 @@ df_hourly_avgs <- df_date_col_select %>%
   mutate(precipitation_flux = mean(Rain_Total_mm/3600, na.rm=TRUE)) %>% #convert from mm/hr to kg/m2s
   mutate(surface_downwelling_longwave_flux_in_air = mean(InfraredRadiationUp_Average_W_m2, na.rm=TRUE)) %>%
   mutate(surface_downwelling_shortwave_flux_in_air = mean(ShortwaveRadiationUp_Average_W_m2,na.rm=TRUE)) %>%
+  mutate(datetime = as.POSIXct(paste0(date,' ',hour,':00'), format = '%Y-%m-%d %H:%M', tz = 'UTC')) %>%
   ungroup() %>%
   distinct(date, hour, .keep_all = TRUE) %>%
-  select(date,hour,doy,northward_wind,eastward_wind,air_pressure,air_temperature,relative_humidity,precipitation_flux,surface_downwelling_longwave_flux_in_air,surface_downwelling_shortwave_flux_in_air)
+  select(datetime,date,hour,doy,northward_wind,eastward_wind,air_pressure,air_temperature,relative_humidity,precipitation_flux,surface_downwelling_longwave_flux_in_air,surface_downwelling_shortwave_flux_in_air)
+
+# create base df of all dates/hours needed for data
+full_year <- data.frame(datetime = seq(as.POSIXct('2015-07-07 15:00:00'),as.POSIXct('2023-03-31 08:00:00'),by = 'hour'))
+
+# join data onto datetime base df to create NA records for missing dates
+df_date_match <- full_year %>% full_join(df_hourly_avgs, by='datetime') %>% select(-doy,-hour,-date)
+
 
 ### CONVERT DATA TO LONG FORMAT AND SUBSET TO INCLUDE ONLY FULL YEARS OF DATA
-df_met_long <- df_hourly_avgs %>%
-  gather(key = 'variable', value = 'prediction', -doy, -date, -hour) %>%
-  mutate(year = format(as.Date(date, format="%Y-%m-%d"),"%Y")) %>%
-  filter(date > '2015-12-31') %>%
-  filter(date < '2023-01-01')
+df_met_long <- df_date_match %>%
+  gather(key = 'variable', value = 'prediction', -datetime, na.rm = FALSE) %>%
+  mutate(year = format(as.Date(datetime, format="%Y-%m-%d %H:%M"),"%Y")) %>%
+  mutate(doy = as.numeric(strftime(datetime, format = "%j"))) %>%
+  mutate(hour = hour(datetime)) %>%
+  filter(datetime >= '2016-01-01 00:00') %>%
+  filter(datetime < '2023-01-01 00:00')
 
 # ASSIGN ENSEMBLE MEMBER NUMBER FOR EACH YEAR
 df_met_long$parameter <- NA
@@ -300,6 +311,7 @@ df_met_join <- date_store %>%
   select(site_id,prediction,variable, height, horizon, parameter, family, reference_datetime, start_date, forecast_valid, datetime, longitude, latitude) %>%
   arrange(datetime)
 
+
 # FILL IN MISSING DATA WITH AVERAGES FROM OTHER E-MEMBERS
 library(zoo)
 df_nan_fix <- df_met_join %>%
@@ -307,7 +319,8 @@ df_nan_fix <- df_met_join %>%
   mutate(prediction = na.aggregate(prediction)) %>%
   ungroup()
 
-df_nan_fix$datetime_fix <- as.Date(df_nan_fix$datetime, "%m/%d/%Y %H:%M")
+#df_nan_fix$datetime <- as.Date(df_nan_fix$datetime, "%m/%d/%Y %H:%M")
+df_nan_fix <- df_nan_fix %>% filter(!is.na(parameter))
 
 ## SAVE TABLE TO S3 STORAGE
 s3_write <- arrow::s3_bucket("drivers/noaa/clim-annual/stage2/parquet/0", endpoint_override = "s3.flare-forecast.org")
