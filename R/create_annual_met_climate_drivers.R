@@ -222,7 +222,7 @@ df_date_col_select <- df_met_full %>%
   mutate(hour = hour(DateTime)) %>%
   select(-contains('Note')) %>%
   select(-contains('Flag')) %>%
-  select(-c('Reservoir','Site','Albedo_Average_W_m2','CR3000Battery_V','CR3000Panel_Temp_C','PAR_umolm2s_Average','PAR_Total_mmol_m2','InfraredRadiationUp_Average_W_m2'))
+  select(-c('Reservoir','Site','Albedo_Average_W_m2','CR3000Battery_V','CR3000Panel_Temp_C','PAR_umolm2s_Average','PAR_Total_mmol_m2','InfraredRadiationDown_Average_W_m2', 'ShortwaveRadiationDown_Average_W_m2'))
 
 # REMOVE DATA OBJECTS WE DONT NEED TO CLEAR UP RAM SPACE
 rm(df_met_full)
@@ -233,11 +233,11 @@ df_hourly_avgs <- df_date_col_select %>%
   mutate(northward_wind  = mean(WindSpeed_Average_m_s*cos(WindDir_degrees),na.rm=TRUE)) %>% #identify u component of wind
   mutate(eastward_wind = mean(WindSpeed_Average_m_s*sin(WindDir_degrees),na.rm=TRUE)) %>% #identify v component of wind
   mutate(air_pressure = mean(BP_Average_kPa*1000,na.rm=TRUE)) %>% #convert kPa to Pa
-  mutate(air_temperature = mean(AirTemp_C_Average, na.rm =TRUE)) %>%
-  mutate(relative_humidity = mean(RH_percent, na.rm=TRUE)) %>%
+  mutate(air_temperature = mean(AirTemp_C_Average+273.15, na.rm =TRUE)) %>%
+  mutate(relative_humidity = mean(RH_percent/100, na.rm=TRUE)) %>%
   mutate(precipitation_flux = mean(Rain_Total_mm/3600, na.rm=TRUE)) %>% #convert from mm/hr to kg/m2s
-  mutate(surface_downwelling_longwave_flux_in_air = mean(InfraredRadiationDown_Average_W_m2, na.rm=TRUE)) %>%
-  mutate(surface_downwelling_shortwave_flux_in_air = mean(ShortwaveRadiationDown_Average_W_m2,na.rm=TRUE)) %>%
+  mutate(surface_downwelling_longwave_flux_in_air = mean(InfraredRadiationUp_Average_W_m2, na.rm=TRUE)) %>%
+  mutate(surface_downwelling_shortwave_flux_in_air = mean(ShortwaveRadiationUp_Average_W_m2,na.rm=TRUE)) %>%
   ungroup() %>%
   distinct(date, hour, .keep_all = TRUE) %>%
   select(date,hour,doy,northward_wind,eastward_wind,air_pressure,air_temperature,relative_humidity,precipitation_flux,surface_downwelling_longwave_flux_in_air,surface_downwelling_shortwave_flux_in_air)
@@ -293,13 +293,22 @@ date_match <- data.frame(new_dates = future_dates, doy = as.numeric(strftime(fut
 df_met_join <- date_store %>%
   right_join(df_met_long, by=c('doy','hour')) %>%
   right_join(date_match,by='doy') %>%
-  mutate(datetime = format(as.POSIXct(paste0(new_dates,' ',hour,':00'), format = '%Y-%m-%d %H:%M', tz = 'UTC'))) %>%
-  mutate(reference_datetime = format(as.POSIXct(paste0(future_dates[1],' ','00:00'), format = '%Y-%m-%d %H:%M', tz = 'UTC'))) %>%
+  mutate(datetime = as.POSIXct(paste0(new_dates,' ',hour,':00'), format = '%Y-%m-%d %H:%M', tz = 'UTC')) %>%
+  mutate(reference_datetime = as.POSIXct(paste0(future_dates[1],' ','00:00'), format = '%Y-%m-%d %H:%M', tz = 'UTC')) %>%
   mutate(start_date = as.Date(reference_datetime)) %>%
   mutate(horizon = as.numeric(difftime(datetime,reference_datetime,units = 'hours'))) %>%
   select(site_id,prediction,variable, height, horizon, parameter, family, reference_datetime, start_date, forecast_valid, datetime, longitude, latitude) %>%
   arrange(datetime)
 
+# FILL IN MISSING DATA WITH AVERAGES FROM OTHER E-MEMBERS
+library(zoo)
+df_nan_fix <- df_met_join %>%
+  group_by(variable, datetime) %>%
+  mutate(prediction = na.aggregate(prediction)) %>%
+  ungroup()
+
+df_nan_fix$datetime_fix <- as.Date(df_nan_fix$datetime, "%m/%d/%Y %H:%M")
+
 ## SAVE TABLE TO S3 STORAGE
 s3_write <- arrow::s3_bucket("drivers/noaa/clim-annual/stage2/parquet/0", endpoint_override = "s3.flare-forecast.org")
-arrow::write_dataset(df_met_join, s3_write, format = "parquet", partitioning = c("start_date", "site_id"), hive_style = FALSE)
+arrow::write_dataset(df_nan_fix, s3_write, format = "parquet", partitioning = c("start_date", "site_id"), hive_style = FALSE)
