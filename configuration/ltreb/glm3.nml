@@ -95,7 +95,7 @@
    time_fmt = 'YYYY-MM-DD hh:mm:ss'
 /
 &inflow
-   num_inflows = 2
+   num_inflows = 1
    names_of_strms = 'weir','SSS'
    subm_flag = .true., .true.
    strm_hf_angle = 55, -15

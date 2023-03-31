@@ -1,8 +1,8 @@
 restart_file: .na
-start_datetime: 2021-03-27 00:00:00
+start_datetime: 2023-02-27 00:00:00
 end_datetime: .na
-forecast_start_datetime: 2022-09-27 00:00:00
-forecast_horizon: 0.0
+forecast_start_datetime: 2023-03-26 00:00:00
+forecast_horizon: 20.0
 sim_name: ltreb
 configure_flare: configure_flare_glm_aed.yml
 configure_obs: observation_processing.yml
