@@ -18,14 +18,14 @@ config_set_name <- "ltreb"
 
 config_files <- paste0("configure_flare_glm_aed.yml")
 
-num_forecasts <- 52 * 2
+num_forecasts <- 2
 #num_forecasts <- 1 #52 * 3 - 3
 #num_forecasts <- 1#19 * 7 + 1
-days_between_forecasts <- 7
-forecast_horizon <- 16 #32
-starting_date <- as_date("2021-03-27")
+days_between_forecasts <- 0
+forecast_horizon <- 20 #32
+starting_date <- as_date("2023-02-27")
 #second_date <- as_date("2020-12-01") - days(days_between_forecasts)
-second_date <- as_date("2022-09-27") #- days(days_between_forecasts)
+second_date <- as_date("2023-03-26") #- days(days_between_forecasts)
 #starting_date <- as_date("2018-07-20")
 #second_date <- as_date("2018-07-23") #- days(days_between_forecasts)
 #second_date <- as_date("2018-09-01") - days(days_between_forecasts)
@@ -171,7 +171,7 @@ cycle <- "00"
 if(starting_index == 1){
   config$run_config$start_datetime <- as.character(paste0(start_dates[1], " 00:00:00"))
   config$run_config$forecast_start_datetime <- as.character(paste0(start_dates[2], " 00:00:00"))
-  config$run_config$forecast_horizon <- 0
+  config$run_config$forecast_horizon <- forecast_horizon
   config$run_config$restart_file <- NA
   run_config <- config$run_config
   yaml::write_yaml(run_config, file = file.path(config$file_path$configuration_directory, configure_run_file))
@@ -223,14 +223,15 @@ for(i in starting_index:length(forecast_start_dates)){
 
   #Need to remove the 00 ensemble member because it only goes 16-days in the future
 
-  #pars_config <- NULL #readr::read_csv(file.path(config$file_path$configuration_directory, "FLAREr", config$model_settings$par_config_file), col_types = readr::cols())
-  pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
+  pars_config <- NULL #readr::read_csv(file.path(config$file_path$configuration_directory, "FLAREr", config$model_settings$par_config_file), col_types = readr::cols())
+  #pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
   obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
   states_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$states_config_file), col_types = readr::cols())
 
 
   #Download and process observations (already done)
 
+  #met_out <- FLAREr::generate_met_files_arrow(obs_met_file = file.path(config$file_path$qaqc_data_directory, paste0("observed-met_",config$location$site_id,".csv")),
   met_out <- FLAREr::generate_met_files_arrow(obs_met_file = file.path(config$file_path$qaqc_data_directory, paste0("observed-met_",config$location$site_id,".csv")),
                                               out_dir = config$file_path$execute_directory,
                                               start_datetime = config$run_config$start_datetime,
@@ -242,8 +243,8 @@ for(i in starting_index:length(forecast_start_dates)){
                                               bucket = config$s3$drivers$bucket,
                                               endpoint = config$s3$drivers$endpoint,
                                               local_directory = NULL,
-                                              use_forecast = TRUE,
-                                              use_ler_vars = FALSE)
+                                              use_forecast = config$met$use_forecasted_met,
+                                              use_siteid_s3 = FALSE)
 
   if(config$model_settings$model_name == "glm_aed"){
     variables <- c("time", "FLOW", "TEMP", "SALT",
@@ -328,7 +329,7 @@ for(i in starting_index:length(forecast_start_dates)){
                                                 model_sd = model_sd,
                                                 working_directory = config$file_path$execute_directory,
                                                 met_file_names = met_out$filenames,
-                                                inflow_file_names = inflow_outflow_files$inflow_file_name,
+                                                inflow_file_names = inflow_outflow_files$inflow_file_name[,1],
                                                 outflow_file_names = inflow_outflow_files$outflow_file_name,
                                                 config = config,
                                                 pars_config = pars_config,
