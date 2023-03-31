@@ -25,7 +25,7 @@ days_between_forecasts <- 7
 forecast_horizon <- 16 #32
 starting_date <- as_date("2021-03-27")
 #second_date <- as_date("2020-12-01") - days(days_between_forecasts)
-second_date <- as_date("2022-09-27") #- days(days_between_forecasts)
+second_date <- as_date("2022-03-26") #- days(days_between_forecasts)
 #starting_date <- as_date("2018-07-20")
 #second_date <- as_date("2018-07-23") #- days(days_between_forecasts)
 #second_date <- as_date("2018-09-01") - days(days_between_forecasts)
