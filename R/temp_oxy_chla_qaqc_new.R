@@ -1,4 +1,4 @@
-temp_oxy_chla_qaqc <- function(realtime_file,
+qaqc_edi_combine <- function(realtime_file,
                                qaqc_file,
                                config,
                                input_file_tz){

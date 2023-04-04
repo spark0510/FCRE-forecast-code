@@ -380,4 +380,4 @@ config_file <- read_yaml('~/FCRE-forecast_code/configuration/defaultV2/observati
 
 L1_file <- read.csv('~/FCRE-data/fcre-waterquality_L1.csv', na.strings = 'NA', stringsAsFactors = FALSE)
 
-test_df <- temp_oxy_chla_qaqc(realtime_file = L1_file, qaqc_file = edi_file, config = config_file ,input_file_tz = "America/New_York")
+test_df <- qaqc_edi_combine(realtime_file = L1_file, qaqc_file = edi_file, config = config_file ,input_file_tz = "America/New_York")
