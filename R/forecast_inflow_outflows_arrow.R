@@ -110,6 +110,8 @@ forecast_inflows_outflows_arrow <- function(inflow_obs,
 
 
     d <- purrr::map_dfr(ensemble_members, function(ens, noaa_met, obs_met, init_flow, init_temp){
+
+      print(ens)
       df <- noaa_met |>
         dplyr::filter(parameter == ens) |>
         dplyr::select(-parameter) |>
@@ -219,6 +221,8 @@ forecast_inflows_outflows_arrow <- function(inflow_obs,
 
 
       combined <- dplyr::bind_rows(df, df_output)
+
+      print(combined)
     },
     noaa_met, obs_met, init_flow, init_temp)
 

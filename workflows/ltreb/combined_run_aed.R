@@ -22,7 +22,7 @@ num_forecasts <- 2
 #num_forecasts <- 1 #52 * 3 - 3
 #num_forecasts <- 1#19 * 7 + 1
 days_between_forecasts <- 0
-forecast_horizon <- 20 #32
+forecast_horizon <- 364 #32
 starting_date <- as_date("2023-02-27")
 #second_date <- as_date("2020-12-01") - days(days_between_forecasts)
 second_date <- as_date("2023-03-26") #- days(days_between_forecasts)
