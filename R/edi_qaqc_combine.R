@@ -1,30 +1,29 @@
-qaqc_edi_combine <- function(realtime_file,
+wq_realtime_edi_combine <- function(realtime_file,
                                qaqc_file,
-                               config,
+                               config_file,
                                input_file_tz){
 
 
+  config <- read_yaml(config_file)
   # realtime_file = L1 FILE STORED ON GITHUB
   # qaqc_file = EXISTING FILE STORED ON EDI
 
-  edi_exist <- TRUE
+  d1 <- read.csv(realtime_file, na.strings = 'NA', stringsAsFactors = FALSE)
+  #d1 <- realtime_file
 
-  #d1 <- read.csv(realtime_file, na.strings = 'NA', stringsAsFactors = FALSE)
-  d1 <- realtime_file
+  #salt_quantiles <- quantile(((0.001 * d1$EXOSpCond_uScm_1) ^ 1.08), c(0.0025,0.975), na.rm = TRUE)
 
-  salt_quantiles <- quantile(((0.001 * d1$EXOSpCond_uScm_1) ^ 1.08), c(0.0025,0.975), na.rm = TRUE)
+  # d1 <- d1 |>
+  #   dplyr::mutate(salt = (0.001 * d1$EXOSpCond_uScm_1) ^ 1.08) |>
+  #   dplyr::mutate(salt = ifelse(salt < salt_quantiles[1] | salt > salt_quantiles[2], NA, salt))
 
-  d1 <- d1 |>
-    dplyr::mutate(salt = (0.001 * d1$EXOSpCond_uScm_1) ^ 1.08) |>
-    dplyr::mutate(salt = ifelse(salt < salt_quantiles[1] | salt > salt_quantiles[2], NA, salt))
-
-  #if(!is.na(qaqc_file)){
-  if(edi_exist == TRUE){
+  if(!is.na(qaqc_file)){
+  #if(edi_exist == TRUE){
     #Different lakes are going to have to modify this for their temperature data format
     #d1 <- realtime_file
 
-    #d2 <- read.csv(qaqc_file, na.strings = 'NA', stringsAsFactors = FALSE)
-    d2 <- qaqc_file
+    d2 <- read.csv(qaqc_file, na.strings = 'NA', stringsAsFactors = FALSE)
+    #d2 <- qaqc_file
 
     TIMESTAMP_in <- as_datetime(d1$DateTime,tz = input_file_tz)
     d1$TIMESTAMP <- with_tz(TIMESTAMP_in,tz = "UTC")
@@ -40,9 +39,9 @@ qaqc_edi_combine <- function(realtime_file,
       dplyr::mutate(Depth_m = LvlPressure_psi_9 * 0.70455,
                     Depth_m = ifelse(Depth_m < 8, NA, Depth_m))
 
-    d2 <- d2 |>
-      dplyr::mutate(salt = (0.001 * EXOSpCond_uScm_1) ^ 1.08) |>
-      dplyr::mutate(salt = ifelse(salt < salt_quantiles[1] | salt > salt_quantiles[2], NA, salt))
+    # d2 <- d2 |>
+    #   dplyr::mutate(salt = (0.001 * EXOSpCond_uScm_1) ^ 1.08) |>
+    #   dplyr::mutate(salt = ifelse(salt < salt_quantiles[1] | salt > salt_quantiles[2], NA, salt))
 
 
 
@@ -61,7 +60,7 @@ qaqc_edi_combine <- function(realtime_file,
                       Chla_1 = d1$EXOChla_ugL_1, doobs_1 = d1$EXODO_mgL_1,
                       doobs_5 = d1$RDO_mgL_5, doobs_9 = d1$RDO_mgL_9,
                       fDOM_1 = d1$EXOfDOM_QSU_1, bgapc_1 = d1$EXOBGAPC_ugL_1,
-                      depth_1.6 = d1$EXODepth_m, Depth_m = d1$Depth_m, salt = d1$salt)
+                      depth_1.6 = d1$EXODepth_m, Depth_m = d1$Depth_m, spec_cond = d1$EXOSpCond_uScm_1)
 
     d4 <- data.frame(TIMESTAMP = d2$TIMESTAMP, wtr_surface = d2$ThermistorTemp_C_surface,
                      wtr_1 = d2$ThermistorTemp_C_1, wtr_2 = d2$ThermistorTemp_C_2,
@@ -73,7 +72,7 @@ qaqc_edi_combine <- function(realtime_file,
                      Chla_1 = d2$EXOChla_ugL_1, doobs_1 = d2$EXODO_mgL_1,
                      doobs_5 = d2$RDO_mgL_5, doobs_9 = d2$RDO_mgL_9,
                      fDOM_1 = d2$EXOfDOM_QSU_1, bgapc_1 = d2$EXOBGAPC_ugL_1,
-                     depth_1.6 = d2$EXODepth_m, Depth_m = d2$Depth_m, salt = d2$salt)
+                     depth_1.6 = d2$EXODepth_m, Depth_m = d2$Depth_m, spec_cond = d2$EXOSpCond_uScm_1)
 
     d <- rbind(d3,d4)
 
@@ -94,9 +93,16 @@ qaqc_edi_combine <- function(realtime_file,
                      Chla_1 = d1$EXOChla_ugL_1, doobs_1 = d1$EXODO_mgL_1,
                      doobs_5 = d1$RDO_mgL_5, doobs_9 = d1$RDO_mgL_9,
                      fDOM_1 = d1$EXOfDOM_QSU_1, bgapc_1 = d1$EXOBGAPC_ugL_1,
-                     depth_1.6 = d1$EXO_depth, Depth_m = d1$Depth_m, salt = d1$salt)
+                     depth_1.6 = d1$EXO_depth, Depth_m = d1$Depth_m, spec_cond = d1$EXOSpCond_uScm_1)
   }
 
+
+  salt_quantiles <- quantile(((0.001 * d$spec_cond) ^ 1.08), c(0.0025,0.975), na.rm = TRUE)
+
+  d <- d |>
+    dplyr::mutate(salt = (0.001 * spec_cond) ^ 1.08) |>
+    dplyr::mutate(salt = ifelse(salt < salt_quantiles[1] | salt > salt_quantiles[2], NA, salt)) |>
+    select(-spec_cond)
 
   d$fDOM_1 <- config$exo_sensor_2_grab_sample_fdom[1] + config$exo_sensor_2_grab_sample_fdom[2] * d$fDOM_1
 

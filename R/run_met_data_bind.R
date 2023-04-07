@@ -199,7 +199,7 @@ dt1$Note_Albedo_Average_W_m2 <- as.factor(ifelse((trimws(as.character(dt1$Note_A
 
 edi_file <- dt1
 
-source('R/edi_qaqc_combine.R')
+source('R/met_data_combine.R')
 library(tidyverse)
 library(lubridate)
 library(yaml)
