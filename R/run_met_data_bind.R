@@ -16,3 +16,19 @@ test_df <- met_data_bind(realtime_file = 'https://raw.githubusercontent.com/FLAR
                          input_file_tz = "America/New_York",
                          site_id = 'fcre',
                          nldas = NULL)
+
+
+### TEST INFLOW FUNCTION - NOT WORTH MAKING NEW FUNCITON
+L1 <- 'https://raw.githubusercontent.com/addelany/FCRE-data/fcre-weir-data/FCRWeir_L1.csv'
+
+data_L1 <- read_csv(L1)
+
+
+test_inflow <- inflow_qaqc_csv(realtime_file = L1,
+                            qaqc_file = 'https://portal.edirepository.org/nis/dataviewer?packageid=edi.202.9&entityid=c065ff822e73c747f378efe47f5af12b',
+                            nutrients_file,
+                            silica_file,
+                            co2_ch4,
+                            cleaned_inflow_file,
+                            input_file_tz,
+                            site_id)
