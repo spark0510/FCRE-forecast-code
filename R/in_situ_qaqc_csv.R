@@ -11,12 +11,17 @@ in_situ_qaqc_csv <- function(insitu_obs_fname,
 
   print("QAQC Catwalk")
 
-  d <- temp_oxy_chla_qaqc(realtime_file = insitu_obs_fname[1],
+  d <- wq_realtime_edi_combine(realtime_file = insitu_obs_fname[1],
                           qaqc_file = insitu_obs_fname[2],
-                          maintenance_file = maintenance_file,
-                          input_file_tz = "EST",
-                          focal_depths = config$focal_depths,
-                          config = config)
+                          config = config,
+                          input_file_tz = "EST")
+
+  # d <- temp_oxy_chla_qaqc(realtime_file = insitu_obs_fname[1],
+  #                         qaqc_file = insitu_obs_fname[2],
+  #                         maintenance_file = maintenance_file,
+  #                         input_file_tz = "EST",
+  #                         focal_depths = config$focal_depths,
+  #                         config = config)
 
   if(exists("ctd_fname")){
     if(!is.na(ctd_fname)){

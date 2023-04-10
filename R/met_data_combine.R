@@ -2,8 +2,8 @@ met_data_bind <- function(realtime_file,
                      qaqc_file,
                      cleaned_met_file,
                      input_file_tz,
-                     site_id,
-                     nldas = NULL){
+                     nldas = NULL,
+                     site_id){
 
   if(!is.na(qaqc_file)){
     d1 <- read_csv(realtime_file)
