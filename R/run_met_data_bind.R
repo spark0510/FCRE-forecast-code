@@ -16,7 +16,6 @@
 #                         input_file_tz = "America/New_York",
 #                         site_id = 'fcre',
 #                         nldas = NULL)
-<<<<<<< HEAD
 
 
 ### TEST INFLOW FUNCTION - NOT WORTH MAKING NEW FUNCITON
@@ -33,5 +32,3 @@
      #                       cleaned_inflow_file,
       #                      input_file_tz,
        #                     site_id)
-=======
->>>>>>> d6ca80b714b2ef2eb3f96bfb62b76ca2786445f7

@@ -17,12 +17,9 @@
 
 
 #test_df <- wq_realtime_edi_combine(realtime_file = 'https://raw.githubusercontent.com/FLARE-forecast/FCRE-data/fcre-catwalk-data/fcre-waterquality_L1.csv',
-<<<<<<< HEAD
 #                            qaqc_file = 'https://portal.edirepository.org/nis/dataviewer?packageid=edi.271.7&entityid=71e6b946b751aa1b966ab5653b01077f',
 #                            config_file = 'https://raw.githubusercontent.com/FLARE-forecast/FCRE-forecast-code/main/configuration/defaultV2/observation_processing.yml',
 #                            input_file_tz = "America/New_York")
-=======
  #                           qaqc_file = 'https://portal.edirepository.org/nis/dataviewer?packageid=edi.271.7&entityid=71e6b946b751aa1b966ab5653b01077f',
   #                          config_file = 'https://raw.githubusercontent.com/FLARE-forecast/FCRE-forecast-code/main/configuration/defaultV2/observation_processing.yml',
    #                         input_file_tz = "America/New_York")
->>>>>>> d6ca80b714b2ef2eb3f96bfb62b76ca2786445f7
