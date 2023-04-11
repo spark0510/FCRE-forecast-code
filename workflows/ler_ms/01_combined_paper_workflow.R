@@ -205,7 +205,6 @@ for(i in starting_index:nrow(sims)){
                                               use_forecast = TRUE,
                                               use_ler_vars = use_ler_vars)
 
-  met_out$filenames <- met_out$filenames[!stringr::str_detect(met_out$filenames, "31")]
 
   obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long = file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")),
                                    obs_config = obs_config,
@@ -333,6 +332,6 @@ for(i in starting_index:nrow(sims)){
   rm(da_forecast_output)
   gc()
 
-  RCurl::getURL("https://hc-ping.com/4a9c9101-ab12-4f53-9736-24f9b1cffd63")
+  RCurl::getURL("https://hc-ping.com/0a0bd54c-8db0-4274-818c-9ef9759a206a")
 
 }
