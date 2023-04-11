@@ -34,8 +34,7 @@ FLAREr::get_git_repo(lake_directory,
 
 FLAREr::get_git_repo(lake_directory,
                      directory = config_obs$realtime_inflow_data_location,
-                     git_repo = "https://github.com/addelany/FCRE-data.git")
-                     #git_repo = "https://github.com/FLARE-forecast/FCRE-data.git")
+                     git_repo = "https://github.com/FLARE-forecast/FCRE-data.git")
 
 #get_git_repo(lake_directory,
 #             directory = config_obs$manual_data_location,
