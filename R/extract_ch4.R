@@ -8,7 +8,7 @@ extract_ch4 <- function(fname,
                   DateTime = lubridate::force_tz(DateTime, tzone = input_file_tz),
                   DateTime = DateTime + lubridate::hours(12))%>%
     dplyr::filter(Reservoir == "FCR" & Depth_m < 10 & Site == 100) %>%
-    dplyr::mutate(CH4 = ch4_umolL * 1000 * 0.001) %>%
+    dplyr::mutate(CH4 = CH4_umolL * 1000 * 0.001) %>%
     dplyr::select(DateTime, Depth_m,CH4,Rep) %>%
     dplyr::group_by(DateTime,Depth_m) %>%
     dplyr::summarise(CH4 = mean(CH4, na.rm = TRUE), .groups = "drop") %>%
