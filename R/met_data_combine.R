@@ -6,7 +6,7 @@ met_data_bind <- function(realtime_file,
                      site_id){
 
   if(!is.na(qaqc_file)){
-    d1 <- read_csv(realtime_file)
+    d1 <- read_csv(realtime_file, show_col_types = FALSE)
     #names(d1) <- t <-c("TIMESTAMP","RECORD","BattV","PTemp_C","PAR_Den_Avg","PAR_Tot_Tot","BP_kPa_Avg","AirTC_Avg","RH","Rain_mm_Tot","WS_ms_Avg","WindDir","SR01Up_Avg","SR01Dn_Avg","IR01UpCo_Avg","IR01DnCo_Avg","NR01TK_Avg","Albedo_Avg")
     # d1 <- readr::read_csv(realtime_file,
     #                       col_names = c("TIMESTAMP","RECORD","BattV","PTemp_C","PAR_Den_Avg","PAR_Tot_Tot","BP_kPa_Avg","AirTC_Avg","RH","Rain_mm_Tot","WS_ms_Avg","WindDir","SR01Up_Avg","SR01Dn_Avg","IR01UpCo_Avg","IR01DnCo_Avg","NR01TK_Avg","Albedo_Avg"),
