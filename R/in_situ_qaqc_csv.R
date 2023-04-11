@@ -13,7 +13,7 @@ in_situ_qaqc_csv <- function(insitu_obs_fname,
 
   d <- wq_realtime_edi_combine(realtime_file = insitu_obs_fname[1],
                           qaqc_file = insitu_obs_fname[2],
-                          config_file = config,
+                          config = config,
                           input_file_tz = "EST")
 
   # d <- temp_oxy_chla_qaqc(realtime_file = insitu_obs_fname[1],
