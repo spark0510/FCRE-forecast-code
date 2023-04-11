@@ -34,7 +34,8 @@ FLAREr::get_git_repo(lake_directory,
 
 FLAREr::get_git_repo(lake_directory,
                      directory = config_obs$realtime_inflow_data_location,
-                     git_repo = "https://github.com/FLARE-forecast/FCRE-data.git")
+                     git_repo = "https://github.com/addelany/FCRE-data.git")
+                     #git_repo = "https://github.com/FLARE-forecast/FCRE-data.git")
 
 #get_git_repo(lake_directory,
 #             directory = config_obs$manual_data_location,
@@ -93,7 +94,7 @@ cleaned_met_file <- met_data_bind(realtime_file = file.path(config_obs$file_path
 
 message("Clean up observed inflow")
 
-cleaned_inflow_file <- inflow_qaqc_csv(realtime_file = file.path(config_obs$file_path$data_directory, config_obs$inflow_raw_file1[1]),
+cleaned_inflow_file <- inflow_data_combine(realtime_file = file.path(config_obs$file_path$data_directory, config_obs$inflow_raw_file1[1]),
                                        qaqc_file = file.path(config_obs$file_path$data_directory, config_obs$inflow_raw_file1[2]),
                                        nutrients_file = file.path(config_obs$file_path$data_directory, config_obs$nutrients_fname),
                                        silica_file = file.path(config_obs$file_path$data_directory,  config_obs$silica_fname),

@@ -29,7 +29,7 @@
 #     setwd(diana_location)
 #     system(paste0("git pull"))
 #####
-inflow_qaqc_csv <- function(realtime_file,
+inflow_data_combine <- function(realtime_file,
                             qaqc_file,
                             nutrients_file,
                             silica_file,
@@ -155,9 +155,9 @@ inflow_qaqc_csv <- function(realtime_file,
     ghg <- readr::read_csv(co2_ch4, show_col_types = FALSE) %>%
       dplyr::filter(Reservoir == "FCR") %>%
       dplyr::filter(Site == 100) %>% #weir inflow
-      dplyr::select(DateTime, ch4_umolL) %>%
+      dplyr::select(DateTime, CH4_umolL) %>%
       dplyr::rename(time = DateTime,
-                    CAR_ch4 = ch4_umolL) %>%
+                    CAR_ch4 = CH4_umolL) %>%
       dplyr::mutate(time = lubridate::force_tz(time, tzone = input_file_tz),
                     time = lubridate::with_tz(time, tzone = "UTC"),
                     time = lubridate::as_date(time)) %>%
