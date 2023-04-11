@@ -1,10 +1,10 @@
 wq_realtime_edi_combine <- function(realtime_file,
                                qaqc_file,
-                               config_file,
+                               config,
                                input_file_tz){
 
 
-  config <- config_file
+  #config <- config_file
   #config <- read_yaml(config_file)
   # realtime_file = L1 FILE STORED ON GITHUB
   # qaqc_file = EXISTING FILE STORED ON EDI
