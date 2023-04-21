@@ -13,7 +13,7 @@ use_s3 <- FALSE
 files.sources <- list.files(file.path(lake_directory, "R"), full.names = TRUE)
 sapply(files.sources, source)
 
-sim_names <- "ltreb"
+sim_names <- "ltreb_local_one"
 config_set_name <- "ltreb"
 
 config_files <- paste0("configure_flare_glm_aed.yml")
@@ -22,10 +22,11 @@ num_forecasts <- 2
 #num_forecasts <- 1 #52 * 3 - 3
 #num_forecasts <- 1#19 * 7 + 1
 days_between_forecasts <- 0
-forecast_horizon <- 364 #32
-starting_date <- as_date("2023-02-27")
+#forecast_horizon <- 30 #364 #32
+forecast_horizon <- 0 #364 #32
+starting_date <- as_date("2021-01-01")
 #second_date <- as_date("2020-12-01") - days(days_between_forecasts)
-second_date <- as_date("2023-03-26") #- days(days_between_forecasts)
+second_date <- as_date("2021-12-31") #- days(days_between_forecasts)
 #starting_date <- as_date("2018-07-20")
 #second_date <- as_date("2018-07-23") #- days(days_between_forecasts)
 #second_date <- as_date("2018-09-01") - days(days_between_forecasts)
@@ -33,6 +34,14 @@ second_date <- as_date("2023-03-26") #- days(days_between_forecasts)
 
 #second_date <- as_date("2018-08-01") - days(days_between_forecasts)
 
+
+daily <- seq.Date(starting_date,second_date, by = 1)
+
+fortnightly <- daily[seq(1,length(daily),by=14)]
+
+
+
+## OLD CODE
 start_dates <- rep(NA, num_forecasts)
 start_dates[1:2] <- c(starting_date, second_date)
 for(i in 3:(3 + num_forecasts)){
@@ -42,6 +51,17 @@ for(i in 3:(3 + num_forecasts)){
 start_dates <- as_date(start_dates)
 forecast_start_dates <- start_dates + days(days_between_forecasts)
 forecast_start_dates <- forecast_start_dates[-1]
+
+## NEW CODE
+# start_dates <- as_date(rep(NA, num_forecasts + 1))
+# end_dates <- as_date(rep(NA, num_forecasts + 1))
+# start_dates[1] <- starting_date
+# end_dates[1] <- second_date
+# for(i in 2:(num_forecasts+1)){
+#   start_dates[i] <- as_date(end_dates[i-1])
+#   end_dates[i] <- start_dates[i] + days(days_between_forecasts)
+# }
+
 
 configure_run_file <- "configure_aed_run.yml"
 
@@ -92,28 +112,28 @@ FLAREr::get_git_repo(lake_directory,
 
 #' Download files from EDI
 
-FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi/389/5/3d1866fecfb8e17dc902c76436239431",
+FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi/389/7/02d36541de9088f2dd99d79dc3a7a853",
                      file = config_obs$met_raw_obs_fname[2],
                      lake_directory)
 
-FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi/271/5/c1b1f16b8e3edbbff15444824b65fe8f",
+FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi/271/7/71e6b946b751aa1b966ab5653b01077f",
                      file = config_obs$insitu_obs_fname[2],
                      lake_directory)
 
-FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi/198/8/336d0a27c4ae396a75f4c07c01652985",
+FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi/198/11/81f396b3e910d3359907b7264e689052",
                      file = config_obs$secchi_fname,
                      lake_directory)
 
-FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi/200/11/d771f5e9956304424c3bc0a39298a5ce",
+FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi/200/13/27ceda6bc7fdec2e7d79a6e4fe16ffdf",
                      file = config_obs$ctd_fname,
                      lake_directory)
 
-FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi/199/8/da174082a3d924e989d3151924f9ef98",
+FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi/199/11/509f39850b6f95628d10889d66885b76",
                      file = config_obs$nutrients_fname,
                      lake_directory)
 
 
-FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi/202/7/f5fa5de4b49bae8373f6e7c1773b026e",
+FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi/202/9/c065ff822e73c747f378efe47f5af12b",
                      file = config_obs$inflow_raw_file1[2],
                      lake_directory)
 
@@ -121,14 +141,14 @@ FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi
                      file = "silica_master_df.csv",
                      lake_directory)
 
-FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi/551/5/38d72673295864956cccd6bbba99a1a3",
+FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi/551/7/38d72673295864956cccd6bbba99a1a3",
                      file = "Dissolved_CO2_CH4_Virginia_Reservoirs.csv",
                      lake_directory)
 
 
 #' Clean up observed meterology
 
-cleaned_met_file <- met_qaqc_csv(realtime_file = file.path(config_obs$file_path$data_directory, config_obs$met_raw_obs_fname[1]),
+cleaned_met_file <- met_data_bind(realtime_file = file.path(config_obs$file_path$data_directory, config_obs$met_raw_obs_fname[1]),
                                  qaqc_file = file.path(config_obs$file_path$data_directory, config_obs$met_raw_obs_fname[2]),
                                  cleaned_met_file = file.path(config_obs$file_path$targets_directory, config_obs$site_id,paste0("observed-met_",config_obs$site_id,".csv")),
                                  input_file_tz = "EST",
@@ -137,7 +157,7 @@ cleaned_met_file <- met_qaqc_csv(realtime_file = file.path(config_obs$file_path$
 
 #' Clean up observed inflow
 
-cleaned_inflow_file <- inflow_qaqc_csv(realtime_file = file.path(config_obs$file_path$data_directory, config_obs$inflow_raw_file1[1]),
+cleaned_inflow_file <- inflow_data_combine(realtime_file = file.path(config_obs$file_path$data_directory, config_obs$inflow_raw_file1[1]),
                                        qaqc_file = file.path(config_obs$file_path$data_directory, config_obs$inflow_raw_file1[2]),
                                        nutrients_file = file.path(config_obs$file_path$data_directory, config_obs$nutrients_fname),
                                        silica_file = file.path(config_obs$file_path$data_directory,  config_obs$silica_fname),
@@ -177,8 +197,29 @@ if(starting_index == 1){
   yaml::write_yaml(run_config, file = file.path(config$file_path$configuration_directory, configure_run_file))
 }
 
-#for(i in 1:1){
-for(i in starting_index:length(forecast_start_dates)){
+# create sims df for organizing model runs (NEW CODE ADDED -- ENDS BEFORE FOR LOOP)
+# models <- c('GLM')
+#
+# sims <- expand.grid(paste0(start_dates,"_",second_date,"_", forecast_horizon), models)
+#
+# names(sims) <- c("date","model")
+#
+# sims$start_dates <- stringr::str_split_fixed(sims$date, "_", 3)[,1]
+# sims$end_dates <- stringr::str_split_fixed(sims$date, "_", 3)[,2]
+# sims$horizon <- stringr::str_split_fixed(sims$date, "_", 3)[,3]
+#
+#
+# sims <- sims |>
+#   mutate(model = as.character(model)) |>
+#   select(-date) |>
+#   distinct_all() |>
+#   arrange(start_dates)
+#
+# sims$horizon[1:length(models)] <- 0
+#
+
+for(i in 1:1){
+#for(i in starting_index:length(forecast_start_dates)){
 
   #https_file <- "https://raw.githubusercontent.com/cayelan/FCR-GLM-AED-Forecasting/master/FCR_2013_2019GLMHistoricalRun_GLMv3beta/inputs/FCR_SSS_inflow_2013_2021_20211102_allfractions_2DOCpools.csv"
   #if(!file.exists(file.path(config$file_path$execute_directory, basename(https_file)))){
@@ -246,6 +287,9 @@ for(i in starting_index:length(forecast_start_dates)){
                                               use_forecast = config$met$use_forecasted_met,
                                               use_siteid_s3 = FALSE)
 
+  ## manipulate code to only include one met ensemble member - REMOVE LATER
+  #met_out$filenames <- met_out$filenames[1]
+
   if(config$model_settings$model_name == "glm_aed"){
     variables <- c("time", "FLOW", "TEMP", "SALT",
                    'OXY_oxy',
@@ -301,6 +345,15 @@ for(i in starting_index:length(forecast_start_dates)){
   obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long = file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")),
                                    obs_config = obs_config,
                                    config)
+
+
+  full_time <- seq(lubridate::as_datetime(config$run_config$start_datetime), lubridate::as_datetime(config$run_config$forecast_start_datetime) + lubridate::days(config$run_config$forecast_horizon), by = "1 day")
+  full_time <- as.Date(full_time)
+
+  idx <- which(!full_time %in% fortnightly)
+  obs[, idx, ] <- NA
+
+
 
   obs_secchi_depth <- get_obs_secchi_depth(obs_file = file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")),
                                            start_datetime = config$run_config$start_datetime,
