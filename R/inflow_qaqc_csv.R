@@ -75,34 +75,45 @@ inflow_qaqc_csv <- function(realtime_file,
   #aggregate to daily mean.##
 
   if(!is.na(realtime_file)){
-    inflow_realtime <- readr::read_csv(realtime_file, skip=4, col_names = F, show_col_types = FALSE)
-    inflow_realtime_headers <- read.csv(realtime_file, skip=1, header = F, nrows= 1, as.is=T)
-    colnames(inflow_realtime) <- inflow_realtime_headers
-    inflow_realtime <- inflow_realtime %>%
-      dplyr::select(TIMESTAMP, Lvl_psi, wtr_weir) %>%
-      dplyr::rename("psi_corr" = Lvl_psi,
-             "time" = TIMESTAMP,
-             "TEMP" = wtr_weir) %>%
-      dplyr::mutate(time = lubridate::force_tz(time, tzone = input_file_tz),
-             time = lubridate::with_tz(time, tzone = "UTC")) %>%
-      dplyr::filter(time > dplyr::last(inflow_temp_flow$time)) %>%
-      dplyr::mutate(head = ((65.822 * psi_corr) - 4.3804) / 100,
-             head = ifelse(head < 0, 0, 1),
-             FLOW = 2.391 * (head^2.5)) %>%
-      dplyr::mutate(date = as_date(time)) %>%
-      dplyr::group_by(date) %>%
-      dplyr::summarize(FLOW = mean(FLOW, na.rm = TRUE),
-                TEMP = mean(TEMP, na.rm = TRUE), .groups = "drop") %>%
-      dplyr::mutate(time = date) %>%
-      dplyr::select(time, FLOW, TEMP) %>%
-      dplyr::mutate(FLOW = 0.003122 + 0.662914*FLOW, #Convert Diana to WVWA
-             SALT = 0.0)
 
-    inflow_combined <- dplyr::full_join(inflow_temp_flow, inflow_realtime, by = "time") %>%
+    inflow_realtime <- readr::read_csv(realtime_file, guess_max = 1000000, show_col_types = FALSE) %>%
+      dplyr::rename("timestamp" = DateTime) %>%
+      dplyr::mutate(timestamp = lubridate::as_datetime(timestamp, tz = input_file_tz),
+                    timestamp = lubridate::with_tz(timestamp, tzone = "UTC")) %>%
+      dplyr::select(timestamp, WVWA_Flow_cms, WVWA_Temp_C, VT_Flow_cms, VT_Temp_C) %>%
+      dplyr::mutate(date = as_date(timestamp)) %>%
+      dplyr::group_by(date) %>%
+      dplyr:: summarize(WVWA_Flow_cms = mean(WVWA_Flow_cms, na.rm = TRUE),
+                        WVWA_Temp_C = mean(WVWA_Temp_C, na.rm = TRUE),
+                        VT_Flow_cms = mean(VT_Flow_cms, na.rm = TRUE),
+                        VT_Temp_C = mean(VT_Temp_C, na.rm = TRUE), .groups = "drop") %>%
+      dplyr::ungroup() %>%
+      dplyr::select(date,WVWA_Flow_cms,WVWA_Temp_C,VT_Flow_cms,VT_Temp_C) %>%
+      dplyr::mutate(VT_Flow_cms = ifelse(is.nan(VT_Flow_cms), NA, VT_Flow_cms),
+                    VT_Temp_C = ifelse(is.nan(VT_Temp_C), NA, VT_Temp_C),
+                    WVWA_Flow_cms = ifelse(is.nan(WVWA_Flow_cms), NA, WVWA_Flow_cms),
+                    WVWA_Temp_C = ifelse(is.nan(WVWA_Temp_C), NA, WVWA_Temp_C)) %>%
+      dplyr::rename("time" = date) %>%
+      dplyr::filter(!is.na(time)) %>%
+      dplyr::arrange(time)
+
+    inflow_temp_flow_realtime <- tibble::tibble(time = seq(first(flow$time), last(flow$time), by = "1 day")) %>%
+      dplyr::left_join(flow, by = "time") %>%
+      dplyr::mutate(TEMP = ifelse(is.na(VT_Temp_C), WVWA_Temp_C, VT_Temp_C),
+                    FLOW = ifelse(time > as_date("2019-06-07"), VT_Flow_cms, WVWA_Flow_cms),
+                    SALT = 0) %>%
+      dplyr::mutate(TEMP = imputeTS::na_interpolation(TEMP),
+                    FLOW = imputeTS::na_interpolation(FLOW)) %>%
+      dplyr::select(time, FLOW, TEMP, SALT)
+
+
+
+    inflow_combined <- dplyr::full_join(inflow_temp_flow, inflow_temp_flow_realtime, by = "time") %>%
       dplyr::mutate(FLOW = ifelse(is.na(FLOW.x), FLOW.y, FLOW.x),
              TEMP = ifelse(is.na(TEMP.x), TEMP.y, TEMP.x),
              SALT = ifelse(is.na(SALT.x), SALT.y, SALT.x)) %>%
       dplyr::select(time, FLOW, TEMP, SALT)
+
   }else{
     inflow_combined <- inflow_temp_flow
     dplyr::select(time, FLOW, TEMP, SALT)
