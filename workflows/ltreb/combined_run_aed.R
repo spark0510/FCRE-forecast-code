@@ -23,9 +23,9 @@ num_forecasts <- 2
 #num_forecasts <- 1#19 * 7 + 1
 days_between_forecasts <- 0
 forecast_horizon <- 30 #364 #32
-starting_date <- as_date("2023-02-27")
+starting_date <- as_date("2021-01-01")
 #second_date <- as_date("2020-12-01") - days(days_between_forecasts)
-second_date <- as_date("2023-03-26") #- days(days_between_forecasts)
+second_date <- as_date("2021-12-31") #- days(days_between_forecasts)
 #starting_date <- as_date("2018-07-20")
 #second_date <- as_date("2018-07-23") #- days(days_between_forecasts)
 #second_date <- as_date("2018-09-01") - days(days_between_forecasts)
@@ -34,25 +34,25 @@ second_date <- as_date("2023-03-26") #- days(days_between_forecasts)
 #second_date <- as_date("2018-08-01") - days(days_between_forecasts)
 
 ## OLD CODE
-# start_dates <- rep(NA, num_forecasts)
-# start_dates[1:2] <- c(starting_date, second_date)
-# for(i in 3:(3 + num_forecasts)){
-#   start_dates[i] <- as_date(start_dates[i-1]) + days(days_between_forecasts)
-# }
-#
-# start_dates <- as_date(start_dates)
-# forecast_start_dates <- start_dates + days(days_between_forecasts)
-# forecast_start_dates <- forecast_start_dates[-1]
+start_dates <- rep(NA, num_forecasts)
+start_dates[1:2] <- c(starting_date, second_date)
+for(i in 3:(3 + num_forecasts)){
+  start_dates[i] <- as_date(start_dates[i-1]) + days(days_between_forecasts)
+}
+
+start_dates <- as_date(start_dates)
+forecast_start_dates <- start_dates + days(days_between_forecasts)
+forecast_start_dates <- forecast_start_dates[-1]
 
 ## NEW CODE
-start_dates <- as_date(rep(NA, num_forecasts + 1))
-end_dates <- as_date(rep(NA, num_forecasts + 1))
-start_dates[1] <- starting_date
-end_dates[1] <- second_date
-for(i in 2:(num_forecasts+1)){
-  start_dates[i] <- as_date(end_dates[i-1])
-  end_dates[i] <- start_dates[i] + days(days_between_forecasts)
-}
+# start_dates <- as_date(rep(NA, num_forecasts + 1))
+# end_dates <- as_date(rep(NA, num_forecasts + 1))
+# start_dates[1] <- starting_date
+# end_dates[1] <- second_date
+# for(i in 2:(num_forecasts+1)){
+#   start_dates[i] <- as_date(end_dates[i-1])
+#   end_dates[i] <- start_dates[i] + days(days_between_forecasts)
+# }
 
 
 configure_run_file <- "configure_aed_run.yml"
@@ -190,24 +190,24 @@ if(starting_index == 1){
 }
 
 # create sims df for organizing model runs (NEW CODE ADDED -- ENDS BEFORE FOR LOOP)
-models <- c('GLM')
-
-sims <- expand.grid(paste0(start_dates,"_",second_date,"_", forecast_horizon), models)
-
-names(sims) <- c("date","model")
-
-sims$start_dates <- stringr::str_split_fixed(sims$date, "_", 3)[,1]
-sims$end_dates <- stringr::str_split_fixed(sims$date, "_", 3)[,2]
-sims$horizon <- stringr::str_split_fixed(sims$date, "_", 3)[,3]
-
-
-sims <- sims |>
-  mutate(model = as.character(model)) |>
-  select(-date) |>
-  distinct_all() |>
-  arrange(start_dates)
-
-sims$horizon[1:length(models)] <- 0
+# models <- c('GLM')
+#
+# sims <- expand.grid(paste0(start_dates,"_",second_date,"_", forecast_horizon), models)
+#
+# names(sims) <- c("date","model")
+#
+# sims$start_dates <- stringr::str_split_fixed(sims$date, "_", 3)[,1]
+# sims$end_dates <- stringr::str_split_fixed(sims$date, "_", 3)[,2]
+# sims$horizon <- stringr::str_split_fixed(sims$date, "_", 3)[,3]
+#
+#
+# sims <- sims |>
+#   mutate(model = as.character(model)) |>
+#   select(-date) |>
+#   distinct_all() |>
+#   arrange(start_dates)
+#
+# sims$horizon[1:length(models)] <- 0
 
 
 #for(i in 1:1){
