@@ -13,7 +13,7 @@ use_s3 <- FALSE
 files.sources <- list.files(file.path(lake_directory, "R"), full.names = TRUE)
 sapply(files.sources, source)
 
-sim_names <- "ltreb_local_one"
+sim_names <- "ltreb"
 config_set_name <- "ltreb"
 
 config_files <- paste0("configure_flare_glm_aed.yml")
@@ -22,8 +22,7 @@ num_forecasts <- 2
 #num_forecasts <- 1 #52 * 3 - 3
 #num_forecasts <- 1#19 * 7 + 1
 days_between_forecasts <- 0
-#forecast_horizon <- 30 #364 #32
-forecast_horizon <- 0 #364 #32
+forecast_horizon <- 30 #364 #32
 starting_date <- as_date("2021-01-01")
 #second_date <- as_date("2020-12-01") - days(days_between_forecasts)
 second_date <- as_date("2021-12-31") #- days(days_between_forecasts)
@@ -33,13 +32,6 @@ second_date <- as_date("2021-12-31") #- days(days_between_forecasts)
 #second_date <- as_date("2019-01-01") - days(days_between_forecasts)
 
 #second_date <- as_date("2018-08-01") - days(days_between_forecasts)
-
-
-daily <- seq.Date(starting_date,second_date, by = 1)
-
-fortnightly <- daily[seq(1,length(daily),by=14)]
-
-
 
 ## OLD CODE
 start_dates <- rep(NA, num_forecasts)
@@ -216,10 +208,10 @@ if(starting_index == 1){
 #   arrange(start_dates)
 #
 # sims$horizon[1:length(models)] <- 0
-#
 
-for(i in 1:1){
-#for(i in starting_index:length(forecast_start_dates)){
+
+#for(i in 1:1){
+for(i in starting_index:length(forecast_start_dates)){
 
   #https_file <- "https://raw.githubusercontent.com/cayelan/FCR-GLM-AED-Forecasting/master/FCR_2013_2019GLMHistoricalRun_GLMv3beta/inputs/FCR_SSS_inflow_2013_2021_20211102_allfractions_2DOCpools.csv"
   #if(!file.exists(file.path(config$file_path$execute_directory, basename(https_file)))){
@@ -287,9 +279,6 @@ for(i in 1:1){
                                               use_forecast = config$met$use_forecasted_met,
                                               use_siteid_s3 = FALSE)
 
-  ## manipulate code to only include one met ensemble member - REMOVE LATER
-  #met_out$filenames <- met_out$filenames[1]
-
   if(config$model_settings$model_name == "glm_aed"){
     variables <- c("time", "FLOW", "TEMP", "SALT",
                    'OXY_oxy',
@@ -345,15 +334,6 @@ for(i in 1:1){
   obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long = file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")),
                                    obs_config = obs_config,
                                    config)
-
-
-  full_time <- seq(lubridate::as_datetime(config$run_config$start_datetime), lubridate::as_datetime(config$run_config$forecast_start_datetime) + lubridate::days(config$run_config$forecast_horizon), by = "1 day")
-  full_time <- as.Date(full_time)
-
-  idx <- which(!full_time %in% fortnightly)
-  obs[, idx, ] <- NA
-
-
 
   obs_secchi_depth <- get_obs_secchi_depth(obs_file = file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")),
                                            start_datetime = config$run_config$start_datetime,
