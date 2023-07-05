@@ -95,7 +95,7 @@ forecast_inflows_outflows_arrow <- function(inflow_obs,
         collect() |>
         dplyr::filter(model_id == "inflow-FLOWS-NOAAGEFS-AR1",
                       variable %in% c("FLOW", "TEMP"),
-                      datetime == previous_run_date) |>
+                      datetime == run_date) |>
         dplyr::select(parameter, variable, prediction) |>
         tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
         dplyr::arrange(parameter)
@@ -221,8 +221,6 @@ forecast_inflows_outflows_arrow <- function(inflow_obs,
 
 
       combined <- dplyr::bind_rows(df, df_output)
-
-      print(combined)
     },
     noaa_met, obs_met, init_flow, init_temp)
 
