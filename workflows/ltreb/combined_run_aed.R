@@ -13,7 +13,7 @@ use_s3 <- FALSE
 files.sources <- list.files(file.path(lake_directory, "R"), full.names = TRUE)
 sapply(files.sources, source)
 
-sim_names <- "ltreb_local_one"
+sim_names <- "ltreb_free"
 config_set_name <- "ltreb"
 
 config_files <- paste0("configure_flare_glm_aed.yml")
@@ -27,6 +27,7 @@ forecast_horizon <- 0 #364 #32
 starting_date <- as_date("2021-01-01")
 #second_date <- as_date("2020-12-01") - days(days_between_forecasts)
 second_date <- as_date("2021-12-31") #- days(days_between_forecasts)
+#second_date <- as_date("2021-02-14") #- days(days_between_forecasts)
 #starting_date <- as_date("2018-07-20")
 #second_date <- as_date("2018-07-23") #- days(days_between_forecasts)
 #second_date <- as_date("2018-09-01") - days(days_between_forecasts)
@@ -82,6 +83,10 @@ if(starting_index == 1){
   run_config <- yaml::read_yaml(file.path(lake_directory, "configuration", config_set_name, configure_run_file))
   run_config$configure_flare <- config_files[j]
   run_config$sim_name <- sim_names
+  run_config$start_datetime <- as.character(paste0(start_dates[1], " 00:00:00"))
+  run_config$forecast_start_datetime <- as.character(paste0(start_dates[2], " 00:00:00"))
+  run_config$forecast_horizon <- forecast_horizon
+  run_config$restart_file <- NA
   yaml::write_yaml(run_config, file = file.path(lake_directory, "configuration", config_set_name, configure_run_file))
   message("deleting existing restart file")
   if(file.exists(file.path(lake_directory, "restart", sites[j], sim_names, configure_run_file))){
@@ -89,6 +94,7 @@ if(starting_index == 1){
   }
   if(run_config$use_s3){
     FLAREr::delete_restart(sites[j], sim_names, bucket = config$s3$warm_start$bucket, endpoint = config$s3$warm_start$endpoint)
+  }else{
   }
 }
 
@@ -188,15 +194,6 @@ FLAREr::put_targets(site_id = config_obs$site_id,
 
 cycle <- "00"
 
-if(starting_index == 1){
-  config$run_config$start_datetime <- as.character(paste0(start_dates[1], " 00:00:00"))
-  config$run_config$forecast_start_datetime <- as.character(paste0(start_dates[2], " 00:00:00"))
-  config$run_config$forecast_horizon <- forecast_horizon
-  config$run_config$restart_file <- NA
-  run_config <- config$run_config
-  yaml::write_yaml(run_config, file = file.path(config$file_path$configuration_directory, configure_run_file))
-}
-
 # create sims df for organizing model runs (NEW CODE ADDED -- ENDS BEFORE FOR LOOP)
 # models <- c('GLM')
 #
@@ -264,8 +261,8 @@ for(i in 1:1){
 
   #Need to remove the 00 ensemble member because it only goes 16-days in the future
 
-  pars_config <- NULL #readr::read_csv(file.path(config$file_path$configuration_directory, "FLAREr", config$model_settings$par_config_file), col_types = readr::cols())
-  #pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
+  #pars_config <- NULL #readr::read_csv(file.path(config$file_path$configuration_directory, "FLAREr", config$model_settings$par_config_file), col_types = readr::cols())
+  pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
   obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
   states_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$states_config_file), col_types = readr::cols())
 
@@ -361,6 +358,9 @@ for(i in 1:1){
                                            forecast_start_datetime = config$run_config$forecast_start_datetime,
                                            forecast_horizon =  config$run_config$forecast_horizon,
                                            secchi_sd = 0.1)
+
+  obs_secchi_depth$obs_secchi$obs[idx] <- NA
+  obs_secchi_depth$obs_depth[idx] <- NA
   #obs[ ,2:dim(obs)[2], ] <- NA
 
   states_config <- FLAREr::generate_states_to_obs_mapping(states_config, obs_config)
