@@ -9,7 +9,8 @@ file_path:
 s3:
   drivers:
     endpoint: s3.flare-forecast.org
-    bucket: drivers/noaa/clim-annual
+    #bucket: drivers/noaa/clim-annual
+    bucket: drivers/noaa/gefs-v12-reprocess
   inflow_drivers:
     endpoint: s3.flare-forecast.org
     bucket: drivers/testing/inflow/parquet
@@ -56,11 +57,11 @@ metadata:
 da_setup:
   da_method: enkf
   par_fit_method: perturb_const
-  ensemble_size: 4
-  localization_distance: .na
+  ensemble_size: 50
+  localization_distance: 1
   no_negative_states: yes
   assimilate_first_step: no
-  use_obs_constraint: FALSE
+  use_obs_constraint: TRUE
 model_settings:
   ncore: 4
   model_name: glm_aed
@@ -142,11 +143,9 @@ default_init:
   white_ice_thickness: 0.0
   blue_ice_thickness: 0.0
 inflow:
-  use_forecasted_inflow: yes
-  forecast_inflow_model: inflow/FLOWS-NOAAGEFS-AR1
+  use_forecasted_inflow: FALSE
 met:
-  use_forecasted_met: TRUE
-  forecast_met_model: noaa/NOAAGEFS_1hr
+  use_forecasted_met: FALSE
 uncertainty:
   observation: yes
   process: yes

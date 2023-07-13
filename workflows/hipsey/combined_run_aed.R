@@ -1,11 +1,10 @@
 library(tidyverse)
 library(lubridate)
-set.seed(100)
+#set.seed(100)
 
 options(future.globals.maxSize= 891289600)
 
 lake_directory <- here::here()
-
 
 starting_index <- 1
 use_s3 <- FALSE
@@ -13,16 +12,17 @@ use_s3 <- FALSE
 files.sources <- list.files(file.path(lake_directory, "R"), full.names = TRUE)
 sapply(files.sources, source)
 
-sim_names <- "ltreb_free"
-config_set_name <- "ltreb"
+sim_names <- "hipsey1"
+config_set_name <- "hipsey"
 
 config_files <- paste0("configure_flare_glm_aed.yml")
 
 num_forecasts <- 2
-#num_forecasts <- 1 #52 * 3 - 3
-#num_forecasts <- 1#19 * 7 + 1
+#num_forecasts <- 365
 days_between_forecasts <- 0
-forecast_horizon <- 30 #364 #32
+#days_between_forecasts <- 35
+#forecast_horizon <- 30 #364 #32
+forecast_horizon <- 0 #364 #32
 starting_date <- as_date("2021-01-01")
 #second_date <- as_date("2020-12-01") - days(days_between_forecasts)
 second_date <- as_date("2021-12-31") #- days(days_between_forecasts)
@@ -33,6 +33,12 @@ second_date <- as_date("2021-12-31") #- days(days_between_forecasts)
 #second_date <- as_date("2019-01-01") - days(days_between_forecasts)
 
 #second_date <- as_date("2018-08-01") - days(days_between_forecasts)
+
+
+daily <- seq.Date(starting_date,second_date, by = 1)
+weekly <- daily[seq(1,length(daily),by=7)]
+#fortnightly <- daily[seq(1,length(daily),by=14)]
+
 
 ## OLD CODE
 start_dates <- rep(NA, num_forecasts)
@@ -205,10 +211,10 @@ cycle <- "00"
 #   arrange(start_dates)
 #
 # sims$horizon[1:length(models)] <- 0
+#
 
-
-#for(i in 1:1){
-for(i in starting_index:length(forecast_start_dates)){
+for(i in 1:1){
+#for(i in starting_index:length(forecast_start_dates)){
 
   #https_file <- "https://raw.githubusercontent.com/cayelan/FCR-GLM-AED-Forecasting/master/FCR_2013_2019GLMHistoricalRun_GLMv3beta/inputs/FCR_SSS_inflow_2013_2021_20211102_allfractions_2DOCpools.csv"
   #if(!file.exists(file.path(config$file_path$execute_directory, basename(https_file)))){
@@ -276,6 +282,9 @@ for(i in starting_index:length(forecast_start_dates)){
                                               use_forecast = config$met$use_forecasted_met,
                                               use_siteid_s3 = FALSE)
 
+  ## manipulate code to only include one met ensemble member - REMOVE LATER
+  #met_out$filenames <- met_out$filenames[1]
+
   if(config$model_settings$model_name == "glm_aed"){
     variables <- c("time", "FLOW", "TEMP", "SALT",
                    'OXY_oxy',
@@ -307,7 +316,7 @@ for(i in starting_index:length(forecast_start_dates)){
     inflow_forecast_dir <- NULL
   }
 
-  inflow_outflow_files <- FLAREr::create_inflow_outflow_files_arrow(inflow_forecast_dir = inflow_forecast_dir,
+  inflow_outflow_files <- FLAREr::create_inflow_outflow_files_arrow(inflow_forecast_dir = NULL,
                                                                     inflow_obs = file.path(config$file_path$qaqc_data_directory, paste0(config$location$site_id, "-targets-inflow.csv")),
                                                                     variables = variables,
                                                                     out_dir = config$file_path$execute_directory,
@@ -320,7 +329,7 @@ for(i in starting_index:length(forecast_start_dates)){
                                                                     bucket = config$s3$inflow_drivers$bucket,
                                                                     endpoint = config$s3$inflow_drivers$endpoint,
                                                                     local_directory = file.path(lake_directory, "drivers", inflow_forecast_dir),
-                                                                    use_forecast = TRUE,
+                                                                    use_forecast = FALSE,
                                                                     use_ler_vars = FALSE)
 
   if(config$model_settings$model_name == "glm_aed"){
@@ -332,6 +341,17 @@ for(i in starting_index:length(forecast_start_dates)){
                                    obs_config = obs_config,
                                    config)
 
+
+  full_time <- seq(lubridate::as_datetime(config$run_config$start_datetime), lubridate::as_datetime(config$run_config$forecast_start_datetime) + lubridate::days(config$run_config$forecast_horizon), by = "1 day")
+  full_time <- as.Date(full_time)
+
+  #idx <- which(!full_time %in% fortnightly)
+  idx <- which(!full_time %in% weekly)
+  #idx <- which(full_time > as_datetime("2021-03-23 00:00:00"))
+  obs[, idx, ] <- NA
+
+
+
   obs_secchi_depth <- get_obs_secchi_depth(obs_file = file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")),
                                            start_datetime = config$run_config$start_datetime,
                                            end_datetime = config$run_config$end_datetime,
@@ -339,8 +359,11 @@ for(i in starting_index:length(forecast_start_dates)){
                                            forecast_horizon =  config$run_config$forecast_horizon,
                                            secchi_sd = 0.1)
 
-  obs_secchi_depth$obs_secchi$obs[idx] <- NA
-  obs_secchi_depth$obs_depth[idx] <- NA
+  obs_secchi_depth$obs_secchi$obs[] <- NA
+  obs_secchi_depth$obs_depth[] <- NA
+
+  #obs_secchi_depth$obs_secchi$obs[idx] <- NA
+  #obs_secchi_depth$obs_depth[idx] <- NA
   #obs[ ,2:dim(obs)[2], ] <- NA
 
   states_config <- FLAREr::generate_states_to_obs_mapping(states_config, obs_config)
@@ -391,7 +414,8 @@ for(i in starting_index:length(forecast_start_dates)){
                                         use_s3 = use_s3,
                                         bucket = config$s3$scores$bucket,
                                         endpoint = config$s3$scores$endpoint,
-                                        local_directory = file.path(lake_directory, "scores/parquet"))
+                                        local_directory = file.path(lake_directory, "scores/parquet"),
+                                        variable_type = c("state","parameter","diagnostic"))
 
   message("Generating plot")
   FLAREr::plotting_general_2(file_name = saved_file,
