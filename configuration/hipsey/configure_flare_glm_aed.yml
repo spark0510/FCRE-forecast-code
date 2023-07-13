@@ -37,23 +37,6 @@ location:
   name: Falling Creek Reservoir
   latitude: 37.307
   longitude: -79.837
-metadata:
-  generate_eml: yes
-  forecast_project_id: test
-  abstract: This is where a longer description of the forest can be added
-  forecast_title: FLARE
-  intellectualRights: MIT
-  model_description:
-    forecast_model_id: https://github.com/rqthomas/flare/commit/d1ddcb07b9d28863890597503fc4aa4a4496de56
-    name: General Lake Model
-    type: process-based
-    repository: https://github.com/AquaticEcoDynamics/GLM/releases/tag/v3.1.0
-  me:
-    individualName:
-      givenName: Quinn
-      surName: Thomas
-    electronicMailAddress: INSERT
-    id: INSERT ORCID
 da_setup:
   da_method: enkf
   par_fit_method: perturb_const

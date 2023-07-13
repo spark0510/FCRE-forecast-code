@@ -12,20 +12,20 @@ use_s3 <- FALSE
 files.sources <- list.files(file.path(lake_directory, "R"), full.names = TRUE)
 sapply(files.sources, source)
 
-sim_names <- "hipsey1"
+sim_names <- "hipsey2"
 config_set_name <- "hipsey"
 
 config_files <- paste0("configure_flare_glm_aed.yml")
 
-num_forecasts <- 2
+num_forecasts <- 52
 #num_forecasts <- 365
-days_between_forecasts <- 0
+days_between_forecasts <- 7
 #days_between_forecasts <- 35
 #forecast_horizon <- 30 #364 #32
-forecast_horizon <- 0 #364 #32
-starting_date <- as_date("2021-01-01")
+forecast_horizon <- 16 #364 #32
+starting_date <- as_date("2020-08-01")
 #second_date <- as_date("2020-12-01") - days(days_between_forecasts)
-second_date <- as_date("2021-12-31") #- days(days_between_forecasts)
+second_date <- as_date("2021-01-01") #- days(days_between_forecasts)
 #second_date <- as_date("2021-02-14") #- days(days_between_forecasts)
 #starting_date <- as_date("2018-07-20")
 #second_date <- as_date("2018-07-23") #- days(days_between_forecasts)
@@ -346,7 +346,7 @@ for(i in 1:1){
   full_time <- as.Date(full_time)
 
   #idx <- which(!full_time %in% fortnightly)
-  idx <- which(!full_time %in% weekly)
+  #idx <- which(!full_time %in% weekly)
   #idx <- which(full_time > as_datetime("2021-03-23 00:00:00"))
   obs[, idx, ] <- NA
 
