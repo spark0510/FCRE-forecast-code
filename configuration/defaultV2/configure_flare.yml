@@ -114,7 +114,7 @@ default_init:
    blue_ice_thickness: 0.0
 inflow:
    use_forecasted_inflow: TRUE
-   forecast_inflow_model: inflow/FLOWS-NOAAGEFS-AR1
+   forecast_inflow_model: FLOWS-NOAAGEFS-AR1
 met:
    use_forecasted_met: TRUE
 uncertainty:
