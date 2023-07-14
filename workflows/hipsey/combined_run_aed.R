@@ -1,6 +1,9 @@
 library(tidyverse)
 library(lubridate)
-#set.seed(100)
+set.seed(100)
+
+experiments <- c("no_da", "daily", "weekly", "fortnightly", "monthly")
+experiment_number <- 1
 
 options(future.globals.maxSize= 891289600)
 
@@ -12,32 +15,32 @@ use_s3 <- FALSE
 files.sources <- list.files(file.path(lake_directory, "R"), full.names = TRUE)
 sapply(files.sources, source)
 
-sim_names <- "hipsey2"
+
+sim_names <- paste0("glm_aed_", experiments[experiment_number])
 config_set_name <- "hipsey"
 
 config_files <- paste0("configure_flare_glm_aed.yml")
 
 num_forecasts <- 52
-#num_forecasts <- 365
 days_between_forecasts <- 7
-#days_between_forecasts <- 35
-#forecast_horizon <- 30 #364 #32
-forecast_horizon <- 16 #364 #32
+forecast_horizon <- 35 #364 #32
 starting_date <- as_date("2020-08-01")
-#second_date <- as_date("2020-12-01") - days(days_between_forecasts)
 second_date <- as_date("2021-01-01") #- days(days_between_forecasts)
-#second_date <- as_date("2021-02-14") #- days(days_between_forecasts)
-#starting_date <- as_date("2018-07-20")
-#second_date <- as_date("2018-07-23") #- days(days_between_forecasts)
-#second_date <- as_date("2018-09-01") - days(days_between_forecasts)
-#second_date <- as_date("2019-01-01") - days(days_between_forecasts)
-
-#second_date <- as_date("2018-08-01") - days(days_between_forecasts)
 
 
-daily <- seq.Date(starting_date,second_date, by = 1)
-weekly <- daily[seq(1,length(daily),by=7)]
-#fortnightly <- daily[seq(1,length(daily),by=14)]
+all_dates <- seq.Date(starting_date,second_date + days(days_between_forecasts * num_forecasts), by = 1)
+
+if(experiments[experiment_number] == "no_da"){
+  dates_with_da <- starting_date
+}else if(experiments[experiment_number] == "daily"){
+  dates_with_da <- all_dates
+}else if(experiments[experiment_number] == "weekly"){
+  dates_with_da <- all_dates[seq(1,length(all_dates),by=7)]
+}else if(experiments[experiment_number] == "forthnightly"){
+  dates_with_da <- all_dates[seq(1,length(all_dates),by=14)]
+}else if(experiments[experiment_number] == "monthly"){
+  dates_with_da <- all_dates[seq(1,length(all_dates),by=28)]
+}
 
 
 ## OLD CODE
@@ -51,25 +54,10 @@ start_dates <- as_date(start_dates)
 forecast_start_dates <- start_dates + days(days_between_forecasts)
 forecast_start_dates <- forecast_start_dates[-1]
 
-## NEW CODE
-# start_dates <- as_date(rep(NA, num_forecasts + 1))
-# end_dates <- as_date(rep(NA, num_forecasts + 1))
-# start_dates[1] <- starting_date
-# end_dates[1] <- second_date
-# for(i in 2:(num_forecasts+1)){
-#   start_dates[i] <- as_date(end_dates[i-1])
-#   end_dates[i] <- start_dates[i] + days(days_between_forecasts)
-# }
-
 
 configure_run_file <- "configure_aed_run.yml"
 
-j = 1
 sites <- "fcre"
-
-#function(i, sites, lake_directory, sim_names, config_files, )
-
-message(paste0("Running site: ", sites[j]))
 
 ##'
 # Set up configurations for the data processing
@@ -79,7 +67,7 @@ config <- FLAREr::set_configuration(configure_run_file,lake_directory, config_se
 
 if(starting_index == 1){
   run_config <- yaml::read_yaml(file.path(lake_directory, "configuration", config_set_name, configure_run_file))
-  run_config$configure_flare <- config_files[j]
+  run_config$configure_flare <- config_files
   run_config$sim_name <- sim_names
   run_config$start_datetime <- as.character(paste0(start_dates[1], " 00:00:00"))
   run_config$forecast_start_datetime <- as.character(paste0(start_dates[2], " 00:00:00"))
@@ -87,11 +75,11 @@ if(starting_index == 1){
   run_config$restart_file <- NA
   yaml::write_yaml(run_config, file = file.path(lake_directory, "configuration", config_set_name, configure_run_file))
   message("deleting existing restart file")
-  if(file.exists(file.path(lake_directory, "restart", sites[j], sim_names, configure_run_file))){
-    unlink(file.path(lake_directory, "restart", sites[j], sim_names, configure_run_file))
+  if(file.exists(file.path(lake_directory, "restart", sites, sim_names, configure_run_file))){
+    unlink(file.path(lake_directory, "restart", sites, sim_names, configure_run_file))
   }
   if(run_config$use_s3){
-    FLAREr::delete_restart(sites[j], sim_names, bucket = config$s3$warm_start$bucket, endpoint = config$s3$warm_start$endpoint)
+    FLAREr::delete_restart(sites, sim_names, bucket = config$s3$warm_start$bucket, endpoint = config$s3$warm_start$endpoint)
   }else{
   }
 }
@@ -109,12 +97,6 @@ FLAREr::get_git_repo(lake_directory,
 FLAREr::get_git_repo(lake_directory,
                      directory = config_obs$realtime_inflow_data_location,
                      git_repo = "https://github.com/FLARE-forecast/FCRE-data.git")
-
-#get_git_repo(lake_directory,
-#             directory = config_obs$manual_data_location,
-#             git_repo = "https://github.com/FLARE-forecast/FCRE-data.git")
-
-#' Download files from EDI
 
 FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi/389/7/02d36541de9088f2dd99d79dc3a7a853",
                      file = config_obs$met_raw_obs_fname[2],
@@ -192,35 +174,7 @@ FLAREr::put_targets(site_id = config_obs$site_id,
 
 cycle <- "00"
 
-# create sims df for organizing model runs (NEW CODE ADDED -- ENDS BEFORE FOR LOOP)
-# models <- c('GLM')
-#
-# sims <- expand.grid(paste0(start_dates,"_",second_date,"_", forecast_horizon), models)
-#
-# names(sims) <- c("date","model")
-#
-# sims$start_dates <- stringr::str_split_fixed(sims$date, "_", 3)[,1]
-# sims$end_dates <- stringr::str_split_fixed(sims$date, "_", 3)[,2]
-# sims$horizon <- stringr::str_split_fixed(sims$date, "_", 3)[,3]
-#
-#
-# sims <- sims |>
-#   mutate(model = as.character(model)) |>
-#   select(-date) |>
-#   distinct_all() |>
-#   arrange(start_dates)
-#
-# sims$horizon[1:length(models)] <- 0
-#
-
-for(i in 1:1){
-#for(i in starting_index:length(forecast_start_dates)){
-
-  #https_file <- "https://raw.githubusercontent.com/cayelan/FCR-GLM-AED-Forecasting/master/FCR_2013_2019GLMHistoricalRun_GLMv3beta/inputs/FCR_SSS_inflow_2013_2021_20211102_allfractions_2DOCpools.csv"
-  #if(!file.exists(file.path(config$file_path$execute_directory, basename(https_file)))){
-  #download.file(https_file,
-  #              file.path(config$file_path$execute_directory, basename(https_file)))
-  #}
+for(i in starting_index:length(forecast_start_dates)){
 
   file.copy(file.path(config$file_path$data_directory,"FCR_SSS_inflow_2013_2021_20220413_allfractions_2DOCpools.csv"),
             file.path(config$file_path$execute_directory,"FCR_SSS_inflow_2013_2021_20220413_allfractions_2DOCpools.csv"))
@@ -231,35 +185,6 @@ for(i in 1:1){
 
   message(paste0("     Running forecast that starts on: ", config$run_config$start_datetime))
 
-  if(config$run_config$forecast_horizon > 0){
-
-    inflow_model_coeff <- NULL
-    inflow_model_coeff$future_inflow_flow_coeff <- c(0.0010803, 0.9478724, 0.3478991)
-    inflow_model_coeff$future_inflow_flow_error <- 0.00965
-    inflow_model_coeff$future_inflow_temp_coeff <- c(0.20291, 0.94214, 0.04278)
-    inflow_model_coeff$future_inflow_temp_error <- 0.943
-
-    temp_flow_forecast <- forecast_inflows_outflows_arrow(inflow_obs = file.path(config$file_path$qaqc_data_directory, "fcre-targets-inflow.csv"),
-                                                          obs_met_file = file.path(config$file_path$qaqc_data_directory,"observed-met_fcre.csv"),
-                                                          inflow_model = config$inflow$forecast_inflow_model,
-                                                          inflow_process_uncertainty = FALSE,
-                                                          inflow_model_coeff = inflow_model_coeff,
-                                                          site_id = config$location$site_id,
-                                                          use_s3_met = TRUE,
-                                                          use_s3_inflow = use_s3,
-                                                          met_bucket = config$s3$drivers$bucket,
-                                                          met_endpoint = config$s3$drivers$endpoint,
-                                                          inflow_bucket = config$s3$inflow_drivers$bucket,
-                                                          inflow_endpoint = config$s3$inflow_drivers$endpoint,
-                                                          inflow_local_directory = file.path(lake_directory, "drivers"),
-                                                          forecast_start_datetime = config$run_config$forecast_start_datetime,
-                                                          forecast_horizon = config$run_config$forecast_horizon)
-
-  }
-
-  #Need to remove the 00 ensemble member because it only goes 16-days in the future
-
-  #pars_config <- NULL #readr::read_csv(file.path(config$file_path$configuration_directory, "FLAREr", config$model_settings$par_config_file), col_types = readr::cols())
   pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
   obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
   states_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$states_config_file), col_types = readr::cols())
@@ -267,7 +192,6 @@ for(i in 1:1){
 
   #Download and process observations (already done)
 
-  #met_out <- FLAREr::generate_met_files_arrow(obs_met_file = file.path(config$file_path$qaqc_data_directory, paste0("observed-met_",config$location$site_id,".csv")),
   met_out <- FLAREr::generate_met_files_arrow(obs_met_file = file.path(config$file_path$qaqc_data_directory, paste0("observed-met_",config$location$site_id,".csv")),
                                               out_dir = config$file_path$execute_directory,
                                               start_datetime = config$run_config$start_datetime,
@@ -303,9 +227,7 @@ for(i in 1:1){
                    'OGM_dop',
                    'OGM_dopr',
                    'OGM_pop',
-                   'PHY_cyano',
-                   'PHY_green',
-                   'PHY_diatom')
+                   'PHY_green')
   }else{
     variables <- c("time", "FLOW", "TEMP", "SALT")
   }
@@ -345,12 +267,8 @@ for(i in 1:1){
   full_time <- seq(lubridate::as_datetime(config$run_config$start_datetime), lubridate::as_datetime(config$run_config$forecast_start_datetime) + lubridate::days(config$run_config$forecast_horizon), by = "1 day")
   full_time <- as.Date(full_time)
 
-  #idx <- which(!full_time %in% fortnightly)
-  #idx <- which(!full_time %in% weekly)
-  #idx <- which(full_time > as_datetime("2021-03-23 00:00:00"))
+  idx <- which(!full_time %in% dates_with_da)
   obs[, idx, ] <- NA
-
-
 
   obs_secchi_depth <- get_obs_secchi_depth(obs_file = file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")),
                                            start_datetime = config$run_config$start_datetime,
@@ -361,10 +279,6 @@ for(i in 1:1){
 
   obs_secchi_depth$obs_secchi$obs[] <- NA
   obs_secchi_depth$obs_depth[] <- NA
-
-  #obs_secchi_depth$obs_secchi$obs[idx] <- NA
-  #obs_secchi_depth$obs_depth[idx] <- NA
-  #obs[ ,2:dim(obs)[2], ] <- NA
 
   states_config <- FLAREr::generate_states_to_obs_mapping(states_config, obs_config)
 

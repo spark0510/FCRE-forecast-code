@@ -2,8 +2,8 @@ restart_file: .na
 start_datetime: 2020-08-01 00:00:00
 end_datetime: .na
 forecast_start_datetime: 2021-01-01 00:00:00
-forecast_horizon: 16.0
-sim_name: hipsey2021
+forecast_horizon: 35.0
+sim_name: glm_aed_no_da
 configure_flare: configure_flare_glm_aed.yml
 configure_obs: observation_processing.yml
 use_s3: no
