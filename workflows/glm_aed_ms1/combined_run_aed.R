@@ -2,8 +2,7 @@ library(tidyverse)
 library(lubridate)
 set.seed(100)
 
-experiments <- c("no_da", "daily", "weekly", "fortnightly", "monthly")
-experiment_number <- 1
+experiments <- c("daily", "no_da", "weekly", "fortnightly", "monthly", "no_da_pars")
 
 options(future.globals.maxSize= 891289600)
 
@@ -16,8 +15,7 @@ files.sources <- list.files(file.path(lake_directory, "R"), full.names = TRUE)
 sapply(files.sources, source)
 
 
-sim_names <- paste0("glm_aed_", experiments[experiment_number])
-config_set_name <- "hipsey"
+config_set_name <- "glm_aed_ms1"
 
 config_files <- paste0("configure_flare_glm_aed.yml")
 
@@ -30,30 +28,40 @@ second_date <- as_date("2021-01-01") #- days(days_between_forecasts)
 
 all_dates <- seq.Date(starting_date,second_date + days(days_between_forecasts * num_forecasts), by = 1)
 
-if(experiments[experiment_number] == "no_da"){
-  dates_with_da <- starting_date
-}else if(experiments[experiment_number] == "daily"){
-  dates_with_da <- all_dates
-}else if(experiments[experiment_number] == "weekly"){
-  dates_with_da <- all_dates[seq(1,length(all_dates),by=7)]
-}else if(experiments[experiment_number] == "forthnightly"){
-  dates_with_da <- all_dates[seq(1,length(all_dates),by=14)]
-}else if(experiments[experiment_number] == "monthly"){
-  dates_with_da <- all_dates[seq(1,length(all_dates),by=28)]
-}
 
+date_list <- list(daily = all_dates,
+                  no_da = starting_date,
+                  weekly = all_dates[seq(1,length(all_dates),by=7)],
+                  fortnightly = all_dates[seq(1,length(all_dates),by=14)],
+                  monthly = all_dates[seq(1,length(all_dates),by=28)],
+                  no_da_pars = starting_date)
+models <- names(date_list)
 
 ## OLD CODE
-start_dates <- rep(NA, num_forecasts)
-start_dates[1:2] <- c(starting_date, second_date)
-for(i in 3:(3 + num_forecasts)){
-  start_dates[i] <- as_date(start_dates[i-1]) + days(days_between_forecasts)
+start_dates <- as_date(rep(NA, num_forecasts + 1))
+end_dates <- as_date(rep(NA, num_forecasts + 1))
+start_dates[1] <- starting_date
+end_dates[1] <- second_date
+for(i in 2:(num_forecasts+1)){
+  start_dates[i] <- as_date(end_dates[i-1])
+  end_dates[i] <- start_dates[i] + days(days_between_forecasts)
 }
 
-start_dates <- as_date(start_dates)
-forecast_start_dates <- start_dates + days(days_between_forecasts)
-forecast_start_dates <- forecast_start_dates[-1]
+sims <- expand.grid(paste0(start_dates,"_",end_dates,"_", forecast_horizon), models)
 
+names(sims) <- c("date","model")
+
+sims$start_dates <- stringr::str_split_fixed(sims$date, "_", 3)[,1]
+sims$end_dates <- stringr::str_split_fixed(sims$date, "_", 3)[,2]
+sims$horizon <- stringr::str_split_fixed(sims$date, "_", 3)[,3]
+
+sims <- sims |>
+  mutate(model = as.character(model)) |>
+  select(-date) |>
+  distinct_all() |>
+  arrange(start_dates)
+
+sims$horizon[1:length(models)] <- 0
 
 configure_run_file <- "configure_aed_run.yml"
 
@@ -62,27 +70,6 @@ sites <- "fcre"
 ##'
 # Set up configurations for the data processing
 config_obs <- FLAREr::initialize_obs_processing(lake_directory, observation_yml = "observation_processing.yml", config_set_name = config_set_name)
-config <- FLAREr::set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name)
-
-
-if(starting_index == 1){
-  run_config <- yaml::read_yaml(file.path(lake_directory, "configuration", config_set_name, configure_run_file))
-  run_config$configure_flare <- config_files
-  run_config$sim_name <- sim_names
-  run_config$start_datetime <- as.character(paste0(start_dates[1], " 00:00:00"))
-  run_config$forecast_start_datetime <- as.character(paste0(start_dates[2], " 00:00:00"))
-  run_config$forecast_horizon <- forecast_horizon
-  run_config$restart_file <- NA
-  yaml::write_yaml(run_config, file = file.path(lake_directory, "configuration", config_set_name, configure_run_file))
-  message("deleting existing restart file")
-  if(file.exists(file.path(lake_directory, "restart", sites, sim_names, configure_run_file))){
-    unlink(file.path(lake_directory, "restart", sites, sim_names, configure_run_file))
-  }
-  if(run_config$use_s3){
-    FLAREr::delete_restart(sites, sim_names, bucket = config$s3$warm_start$bucket, endpoint = config$s3$warm_start$endpoint)
-  }else{
-  }
-}
 
 #' Clone or pull from data repositories
 
@@ -135,22 +122,22 @@ FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi
 #' Clean up observed meterology
 
 cleaned_met_file <- met_data_bind(realtime_file = file.path(config_obs$file_path$data_directory, config_obs$met_raw_obs_fname[1]),
-                                 qaqc_file = file.path(config_obs$file_path$data_directory, config_obs$met_raw_obs_fname[2]),
-                                 cleaned_met_file = file.path(config_obs$file_path$targets_directory, config_obs$site_id,paste0("observed-met_",config_obs$site_id,".csv")),
-                                 input_file_tz = "EST",
-                                 nldas = NULL,
-                                 site_id = config_obs$site_id)
+                                  qaqc_file = file.path(config_obs$file_path$data_directory, config_obs$met_raw_obs_fname[2]),
+                                  cleaned_met_file = file.path(config_obs$file_path$targets_directory, config_obs$site_id,paste0("observed-met_",config_obs$site_id,".csv")),
+                                  input_file_tz = "EST",
+                                  nldas = NULL,
+                                  site_id = config_obs$site_id)
 
 #' Clean up observed inflow
 
 cleaned_inflow_file <- inflow_data_combine(realtime_file = file.path(config_obs$file_path$data_directory, config_obs$inflow_raw_file1[1]),
-                                       qaqc_file = file.path(config_obs$file_path$data_directory, config_obs$inflow_raw_file1[2]),
-                                       nutrients_file = file.path(config_obs$file_path$data_directory, config_obs$nutrients_fname),
-                                       silica_file = file.path(config_obs$file_path$data_directory,  config_obs$silica_fname),
-                                       co2_ch4 = file.path(config_obs$file_path$data_directory, config_obs$ch4_fname),
-                                       cleaned_inflow_file = file.path(config_obs$file_path$targets_directory, config_obs$site_id, paste0(config_obs$site_id,"-targets-inflow.csv")),
-                                       input_file_tz = 'EST',
-                                       site_id = config_obs$site_id)
+                                           qaqc_file = file.path(config_obs$file_path$data_directory, config_obs$inflow_raw_file1[2]),
+                                           nutrients_file = file.path(config_obs$file_path$data_directory, config_obs$nutrients_fname),
+                                           silica_file = file.path(config_obs$file_path$data_directory,  config_obs$silica_fname),
+                                           co2_ch4 = file.path(config_obs$file_path$data_directory, config_obs$ch4_fname),
+                                           cleaned_inflow_file = file.path(config_obs$file_path$targets_directory, config_obs$site_id, paste0(config_obs$site_id,"-targets-inflow.csv")),
+                                           input_file_tz = 'EST',
+                                           site_id = config_obs$site_id)
 
 #' Clean up observed insitu measurements
 
@@ -172,25 +159,53 @@ FLAREr::put_targets(site_id = config_obs$site_id,
                     use_s3 = config$run_config$use_s3,
                     config)
 
-cycle <- "00"
+for(i in starting_index:nrow(sims)){
 
-for(i in starting_index:length(forecast_start_dates)){
+  message(paste0("index: ", i))
+  message(paste0("     Running model: ", sims$model[i], " "))
+
 
   file.copy(file.path(config$file_path$data_directory,"FCR_SSS_inflow_2013_2021_20220413_allfractions_2DOCpools.csv"),
             file.path(config$file_path$execute_directory,"FCR_SSS_inflow_2013_2021_20220413_allfractions_2DOCpools.csv"))
 
+  model <- sims$model[i]
+  sim_names <- model
 
+  config <- FLAREr::set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name, sim_name = sim_names)
+
+  if(file.exists(file.path(lake_directory, "restart", sites[j], sim_names, configure_run_file))){
+    unlink(file.path(lake_directory, "restart", sites[j], sim_names, configure_run_file))
+    if(use_s3){
+      FLAREr::delete_restart(site_id = sites[j],
+                             sim_name = sim_names,
+                             bucket = config$s3$warm_start$bucket,
+                             endpoint = config$s3$warm_start$endpoint)
+    }
+  }
+  run_config <- yaml::read_yaml(file.path(lake_directory, "configuration", config_set_name, configure_run_file))
+  run_config$configure_flare <- config_files
+  run_config$sim_name <- sim_names
+  yaml::write_yaml(run_config, file = file.path(lake_directory, "restart", sites[j], sim_names, configure_run_file))
   config <- FLAREr::set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name)
+  config$run_config$start_datetime <- as.character(paste0(sims$start_dates[i], " 00:00:00"))
+  config$run_config$forecast_start_datetime <- as.character(paste0(sims$end_dates[i], " 00:00:00"))
+  config$run_config$forecast_horizon <- sims$horizon[i]
+  if(i <= length(models)){
+    config$run_config$restart_file <- NA
+  }else{
+    config$run_config$restart_file <- paste0(config$location$site_id, "-", lubridate::as_date(config$run_config$start_datetime), "-", sim_names, ".nc")
+    if(!file.exists(config$run_config$restart_file )){
+      warning(paste0("restart file: ", config$run_config$restart_file, " doesn't exist"))
+    }
+  }
+
+  run_config <- config$run_config
+  yaml::write_yaml(run_config, file = file.path(lake_directory, "restart", sites[j], sim_names, configure_run_file))
+
+  config <- FLAREr::set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name, sim_name = sim_names)
+  config$model_settings$model <- model
+  config$run_config$sim_name <- sim_names
   config <- FLAREr::get_restart_file(config, lake_directory)
-
-  message(paste0("     Running forecast that starts on: ", config$run_config$start_datetime))
-
-  pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
-  obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
-  states_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$states_config_file), col_types = readr::cols())
-
-
-  #Download and process observations (already done)
 
   met_out <- FLAREr::generate_met_files_arrow(obs_met_file = file.path(config$file_path$qaqc_data_directory, paste0("observed-met_",config$location$site_id,".csv")),
                                               out_dir = config$file_path$execute_directory,
@@ -267,7 +282,8 @@ for(i in starting_index:length(forecast_start_dates)){
   full_time <- seq(lubridate::as_datetime(config$run_config$start_datetime), lubridate::as_datetime(config$run_config$forecast_start_datetime) + lubridate::days(config$run_config$forecast_horizon), by = "1 day")
   full_time <- as.Date(full_time)
 
-  idx <- which(!full_time %in% dates_with_da)
+  da_freq <- which(names(date_list) == sims$model[i])
+  idx <- which(!full_time %in% date_list[[da_freq]])
   obs[, idx, ] <- NA
 
   obs_secchi_depth <- get_obs_secchi_depth(obs_file = file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")),
