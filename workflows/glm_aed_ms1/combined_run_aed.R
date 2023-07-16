@@ -2,7 +2,7 @@ library(tidyverse)
 library(lubridate)
 set.seed(100)
 
-experiments <- c("daily", "no_da", "weekly", "fortnightly", "monthly", "no_da_pars")
+experiments <- c("daily", "weekly", "fortnightly", "monthly") #"no_da", "no_da_pars"
 
 options(future.globals.maxSize= 891289600)
 
@@ -16,28 +16,27 @@ sapply(files.sources, source)
 
 
 config_set_name <- "glm_aed_ms1"
-
-config_files <- paste0("configure_flare_glm_aed.yml")
+site <- "fcre"
+configure_run_file <- "configure_aed_run.yml"
+config_files <- "configure_flare_glm_aed.yml"
 
 num_forecasts <- 52
 days_between_forecasts <- 7
-forecast_horizon <- 35 #364 #32
+forecast_horizon <- 35
 starting_date <- as_date("2020-08-01")
-second_date <- as_date("2021-01-01") #- days(days_between_forecasts)
+second_date <- as_date("2021-01-01")
 
 
 all_dates <- seq.Date(starting_date,second_date + days(days_between_forecasts * num_forecasts), by = 1)
 
-
 date_list <- list(daily = all_dates,
-                  no_da = starting_date,
+                  #no_da = starting_date,
                   weekly = all_dates[seq(1,length(all_dates),by=7)],
                   fortnightly = all_dates[seq(1,length(all_dates),by=14)],
-                  monthly = all_dates[seq(1,length(all_dates),by=28)],
-                  no_da_pars = starting_date)
+                  monthly = all_dates[seq(1,length(all_dates),by=28)])#,
+                  #no_da_pars = starting_date)
 models <- names(date_list)
 
-## OLD CODE
 start_dates <- as_date(rep(NA, num_forecasts + 1))
 end_dates <- as_date(rep(NA, num_forecasts + 1))
 start_dates[1] <- starting_date
@@ -63,11 +62,6 @@ sims <- sims |>
 
 sims$horizon[1:length(models)] <- 0
 
-configure_run_file <- "configure_aed_run.yml"
-
-sites <- "fcre"
-
-##'
 # Set up configurations for the data processing
 config_obs <- FLAREr::initialize_obs_processing(lake_directory, observation_yml = "observation_processing.yml", config_set_name = config_set_name)
 
@@ -152,40 +146,40 @@ cleaned_insitu_file <- in_situ_qaqc_csv(insitu_obs_fname = file.path(config_obs$
                                         lake_name_code = config_obs$site_id,
                                         config = config_obs)
 
-FLAREr::put_targets(site_id = config_obs$site_id,
-                    cleaned_insitu_file,
-                    cleaned_met_file,
-                    cleaned_inflow_file,
-                    use_s3 = config$run_config$use_s3,
-                    config)
+#FLAREr::put_targets(site_id = config_obs$site_id,
+#                    cleaned_insitu_file,
+#                    cleaned_met_file,
+#                    cleaned_inflow_file,
+#                    use_s3 = use_s3,
+#                    config)
 
 for(i in starting_index:nrow(sims)){
 
   message(paste0("index: ", i))
   message(paste0("     Running model: ", sims$model[i], " "))
 
+  model <- sims$model[i]
+  sim_names <- paste0("glmaed_ms_" ,model)
+
+  config <- FLAREr::set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name, sim_name = sim_names)
 
   file.copy(file.path(config$file_path$data_directory,"FCR_SSS_inflow_2013_2021_20220413_allfractions_2DOCpools.csv"),
             file.path(config$file_path$execute_directory,"FCR_SSS_inflow_2013_2021_20220413_allfractions_2DOCpools.csv"))
 
-  model <- sims$model[i]
-  sim_names <- model
-
-  config <- FLAREr::set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name, sim_name = sim_names)
-
-  if(file.exists(file.path(lake_directory, "restart", sites[j], sim_names, configure_run_file))){
-    unlink(file.path(lake_directory, "restart", sites[j], sim_names, configure_run_file))
+  if(file.exists(file.path(lake_directory, "restart", site, sim_names, configure_run_file))){
+    unlink(file.path(lake_directory, "restart", site, sim_names, configure_run_file))
     if(use_s3){
-      FLAREr::delete_restart(site_id = sites[j],
+      FLAREr::delete_restart(site_id = site,
                              sim_name = sim_names,
                              bucket = config$s3$warm_start$bucket,
                              endpoint = config$s3$warm_start$endpoint)
     }
   }
+
   run_config <- yaml::read_yaml(file.path(lake_directory, "configuration", config_set_name, configure_run_file))
   run_config$configure_flare <- config_files
   run_config$sim_name <- sim_names
-  yaml::write_yaml(run_config, file = file.path(lake_directory, "restart", sites[j], sim_names, configure_run_file))
+  yaml::write_yaml(run_config, file = file.path(lake_directory, "restart", site, sim_names, configure_run_file))
   config <- FLAREr::set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name)
   config$run_config$start_datetime <- as.character(paste0(sims$start_dates[i], " 00:00:00"))
   config$run_config$forecast_start_datetime <- as.character(paste0(sims$end_dates[i], " 00:00:00"))
@@ -200,12 +194,17 @@ for(i in starting_index:nrow(sims)){
   }
 
   run_config <- config$run_config
-  yaml::write_yaml(run_config, file = file.path(lake_directory, "restart", sites[j], sim_names, configure_run_file))
+  yaml::write_yaml(run_config, file = file.path(lake_directory, "restart", site, sim_names, configure_run_file))
 
   config <- FLAREr::set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name, sim_name = sim_names)
   config$model_settings$model <- model
   config$run_config$sim_name <- sim_names
   config <- FLAREr::get_restart_file(config, lake_directory)
+
+  pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
+  obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
+  states_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$states_config_file), col_types = readr::cols())
+
 
   met_out <- FLAREr::generate_met_files_arrow(obs_met_file = file.path(config$file_path$qaqc_data_directory, paste0("observed-met_",config$location$site_id,".csv")),
                                               out_dir = config$file_path$execute_directory,
