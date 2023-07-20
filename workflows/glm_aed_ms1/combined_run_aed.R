@@ -1,6 +1,6 @@
 library(tidyverse)
 library(lubridate)
-set.seed(100)
+set.seed(200)
 
 experiments <- c("daily", "weekly", "fortnightly", "monthly") #"no_da", "no_da_pars"
 
@@ -184,6 +184,8 @@ for(i in starting_index:nrow(sims)){
   config$run_config$start_datetime <- as.character(paste0(sims$start_dates[i], " 00:00:00"))
   config$run_config$forecast_start_datetime <- as.character(paste0(sims$end_dates[i], " 00:00:00"))
   config$run_config$forecast_horizon <- sims$horizon[i]
+  config$run_config$configure_flare <- config_files
+  config$run_config$sim_name <- sim_names
   if(i <= length(models)){
     config$run_config$restart_file <- NA
   }else{
