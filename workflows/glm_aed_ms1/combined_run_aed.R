@@ -8,7 +8,7 @@ options(future.globals.maxSize= 891289600)
 
 lake_directory <- here::here()
 
-starting_index <- 1
+starting_index <- 8
 use_s3 <- FALSE
 
 files.sources <- list.files(file.path(lake_directory, "R"), full.names = TRUE)
@@ -183,7 +183,7 @@ for(i in starting_index:nrow(sims)){
   config <- FLAREr::set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name)
   config$run_config$start_datetime <- as.character(paste0(sims$start_dates[i], " 00:00:00"))
   config$run_config$forecast_start_datetime <- as.character(paste0(sims$end_dates[i], " 00:00:00"))
-  config$run_config$forecast_horizon <- sims$horizon[i]
+  config$run_config$forecast_horizon <- as.numeric(sims$horizon[i])
   config$run_config$configure_flare <- config_files
   config$run_config$sim_name <- sim_names
   if(i <= length(models)){
