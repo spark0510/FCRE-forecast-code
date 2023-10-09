@@ -63,7 +63,7 @@ FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi
                      lake_directory)
 
 
-FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi/202/9/c065ff822e73c747f378efe47f5af12b",
+FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi/202/10/c065ff822e73c747f378efe47f5af12b",
                      file = config_obs$inflow_raw_file1[2],
                      lake_directory)
 
