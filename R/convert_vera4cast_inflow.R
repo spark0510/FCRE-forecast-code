@@ -102,6 +102,3 @@ glm_df <- dplyr::bind_rows(glm_df_inflow, glm_df_outflow)
 
 arrow::write_dataset(glm_df, path = save_path)
 }
-
-reference_date <- lubridate::as_date("2023-10-14")
-model_id <- "inflow_gefsClimAED"

@@ -1,14 +1,7 @@
-file_path:
-   qaqc_data_directory: .na
-   noaa_directory: .na
-   inflow_directory: .na
-   configuration_directory: .na
-   execute_directory: .na
-   forecast_output_directory: .na
 s3:
   drivers:
-    endpoint: s3.flare-forecast.org
-    bucket: drivers/noaa/gefs-v12
+    endpoint: renc.osn.xsede.org
+    bucket: bio230121-bucket01/flare/drivers/met
   inflow_drivers:
     endpoint: s3.flare-forecast.org
     bucket: drivers/testing/inflow/parquet
@@ -35,28 +28,11 @@ location:
    name: Falling Creek Reservoir
    latitude: 37.307   #Degrees North
    longitude: -79.837  #Degrees East
-metadata:
-   generate_eml: TRUE
-   forecast_project_id: test
-   abstract: "This is where a longer description of the forecast can be added"
-   forecast_title: FLARE
-   intellectualRights: MIT
-   model_description:
-      forecast_model_id: https://github.com/rqthomas/flare/commit/d1ddcb07b9d28863890597503fc4aa4a4496de56
-      name: General Lake Model
-      type: process-based
-      repository: https://github.com/AquaticEcoDynamics/GLM/releases/tag/v3.1.0
-   me:
-      individualName:
-         givenName: "Quinn"
-         surName: "Thomas"
-      electronicMailAddress:  "INSERT"
-      id: INSERT ORCID
 da_setup:
     da_method: enkf
     par_fit_method: perturb_const
     ensemble_size:  30
-    localization_distance: .na #distance in meters were covariances in the model error are used
+    localization_distance: 2 #distance in meters were covariances in the model error are used
     no_negative_states: TRUE
     assimilate_first_step: FALSE
     use_obs_constraint: TRUE
@@ -130,7 +106,7 @@ met:
    use_openmeteo: TRUE
    openmeteo_api: ensemble_forecast
    openmeteo_model: gfs_seamless #ecmwf_ifs04
-   use_openmeteo_archive: FALSE
+   use_openmeteo_archive: TRUE
 uncertainty:
    observation: TRUE
    process: TRUE
