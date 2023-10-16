@@ -240,7 +240,7 @@ file_name <- paste0(config$run_config$sim_name,
 
 readr::write_csv(vera4cast_df, file = file_name)
 
-#vera4castHelpers::submit(file_name, first_submission = FALSE)
+vera4castHelpers::submit(file_name, first_submission = FALSE)
 
 FLAREr::generate_forecast_score_arrow(targets_file = file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")),
                                       forecast_df = forecast_df,
