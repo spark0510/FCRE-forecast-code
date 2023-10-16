@@ -240,7 +240,7 @@ file_name <- paste0(config$run_config$sim_name,
 
 readr::write_csv(vera4cast_df, file = file_name)
 
-vera4castHelpers::submit(file_name, first_submission = FALSE)
+
 
 FLAREr::generate_forecast_score_arrow(targets_file = file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")),
                                       forecast_df = forecast_df,
@@ -276,5 +276,9 @@ FLAREr::update_run_config2(lake_directory = lake_directory,
                            bucket = config$s3$warm_start$bucket,
                            endpoint = config$s3$warm_start$endpoint,
                            use_https = TRUE)
+
+Sys.unsetenv("AWS_ACCESS_KEY_ID")
+Sys.unsetenv("AWS_SECRET_ACCESS_KEY")
+vera4castHelpers::submit(file_name, first_submission = FALSE)
 
 
