@@ -132,6 +132,9 @@ inflow_outflow_files <- FLAREr::create_inflow_outflow_files_arrow(inflow_forecas
                                                           use_forecast = TRUE,
                                                           use_ler_vars = FALSE)
 
+inflow_outflow_files$inflow_file_names <- inflow_outflow_files$inflow_file_names[which(stringr::str_detect(inflow_outflow_files$inflow_file_names, "ens32", negate = TRUE))]
+inflow_outflow_files$outflow_file_names <- inflow_outflow_files$outflow_file_names[which(stringr::str_detect(inflow_outflow_files$outflow_file_names, "ens32", negate = TRUE))]
+
 
 readr::read_csv("https://renc.osn.xsede.org/bio230121-bucket01/vera4cast/targets/duration=P1D/daily-insitu-targets.csv.gz", show_col_types = FALSE) |>
   dplyr::mutate(observation = ifelse(variable == "DO_mgL_mean", observation*1000*(1/32), observation),
