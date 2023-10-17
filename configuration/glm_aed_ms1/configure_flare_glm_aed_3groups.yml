@@ -9,7 +9,6 @@ file_path:
 s3:
   drivers:
     endpoint: s3.flare-forecast.org
-    #bucket: drivers/noaa/clim-annual
     bucket: drivers/noaa/gefs-v12-reprocess
   inflow_drivers:
     endpoint: s3.flare-forecast.org
@@ -37,37 +36,21 @@ location:
   name: Falling Creek Reservoir
   latitude: 37.307
   longitude: -79.837
-metadata:
-  generate_eml: yes
-  forecast_project_id: test
-  abstract: This is where a longer description of the forest can be added
-  forecast_title: FLARE
-  intellectualRights: MIT
-  model_description:
-    forecast_model_id: https://github.com/rqthomas/flare/commit/d1ddcb07b9d28863890597503fc4aa4a4496de56
-    name: General Lake Model
-    type: process-based
-    repository: https://github.com/AquaticEcoDynamics/GLM/releases/tag/v3.1.0
-  me:
-    individualName:
-      givenName: Quinn
-      surName: Thomas
-    electronicMailAddress: INSERT
-    id: INSERT ORCID
 da_setup:
   da_method: enkf
-  par_fit_method: perturb_const
-  ensemble_size: 50
-  localization_distance: 1
+  par_fit_method: perturb
+  ensemble_size: 62
+  localization_distance: 2
   no_negative_states: yes
   assimilate_first_step: no
   use_obs_constraint: TRUE
+  inflation_factor: 1.0
 model_settings:
   ncore: 4
   model_name: glm_aed
   base_GLM_nml: glm3.nml
-  base_AED_nml: aed2.nml
-  base_AED_phyto_pars_nml: aed_phyto_pars.csv
+  base_AED_nml: aed2_3groups.nml
+  base_AED_phyto_pars_nml: aed_phyto_pars_3groups.csv
   base_AED_zoop_pars_nml: aed2_zoop_pars.nml
   modeled_depths:
   - 0.00
@@ -108,9 +91,9 @@ model_settings:
   - 8.75
   - 9.00
   - 9.25
-  par_config_file: parameter_calibration_config_aed.csv
+  par_config_file: parameter_calibration_config_aed_3groups.csv
   obs_config_file: observations_config_aed.csv
-  states_config_file: states_config_aed.csv
+  states_config_file: states_config_aed_3groups.csv
   depth_model_sd_config_file: depth_model_sd_aed.csv
 default_init:
   lake_depth: 9.4
@@ -157,3 +140,18 @@ uncertainty:
 output_settings:
   diagnostics_names:
   - extc
+  - PHY_green_fPho
+  - PHY_green_fT
+  - PHY_green_fNit
+  - PHY_cyano_fPho
+  - PHY_cyano_fT
+  - PHY_cyano_fNit
+  - PHY_diatom_fPho
+  - PHY_diatom_fT
+  - PHY_diatom_fNit
+  - PHY_par
+  - PHY_upt_dic
+  - PHY_upt_po4
+  - PHY_upt_n2
+  - PHY_upt_nh4
+  - PHY_upt_no3

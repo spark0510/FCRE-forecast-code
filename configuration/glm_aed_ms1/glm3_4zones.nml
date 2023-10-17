@@ -3,7 +3,7 @@
    max_layers = 500
    min_layer_vol = 0.025
    min_layer_thick = 0.1
-   max_layer_thick = 0.2
+   max_layer_thick = 0.3
    non_avg = .true.
 /
 &wq_setup
@@ -28,10 +28,8 @@
    coef_mix_shear = 0.3
    coef_mix_turb = 0.51
    coef_mix_KH = 0.3
-   !coef_mix_shreq = 0.1506756631528729
    coef_mix_shreq = 0
    deep_mixing = 2
-   !coef_mix_hyp = 5.874908532252400e-06
    coef_mix_hyp = 0.5
 /
 &morphometry
@@ -85,7 +83,6 @@
    subdaily = .true.
    wind_factor = 0.9261845587889472
    sw_factor = 0.9563947174962745
-   !sw_factor = 0.9
    lw_factor = 0.9071369064603957
    at_factor = 1
    rh_factor = 1
