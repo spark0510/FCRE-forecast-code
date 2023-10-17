@@ -44,12 +44,12 @@ da_setup:
   no_negative_states: yes
   assimilate_first_step: no
   use_obs_constraint: TRUE
-  inflation_factor: 1.0
+  inflation_factor: 1.1
 model_settings:
   ncore: 4
   model_name: glm_aed
   base_GLM_nml: glm3.nml
-  base_AED_nml: aed2_3groups.nml
+  base_AED_nml: aed2.nml
   base_AED_phyto_pars_nml: aed_phyto_pars.csv
   base_AED_zoop_pars_nml: aed2_zoop_pars.nml
   modeled_depths:

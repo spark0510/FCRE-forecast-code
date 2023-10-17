@@ -1,14 +1,25 @@
 library(tidyverse)
 library(lubridate)
-set.seed(200)
+set.seed(201)
 
-experiments <- c("daily", "weekly", "fortnightly", "monthly") #"no_da", "no_da_pars"
 
-options(future.globals.maxSize= 891289600)
+.libPaths("/usr/local/lib/R/site-library")
+
+#system2("ldd", args = "/usr/local/lib/R/site-library/GLM3r/exec/nixglm")
+
+#.libPaths()
+
+experiments <- c("daily", "daily_manual", "no_da") #, "no_da_pars", "weekly",  "monthly", "daily_no_pars"
+#experiments <- c("weekly", "monthly")
+#experiments <- c("daily") #"daily_no_pars",
+#experiments <- c("monthly","fortnightly", "daily_no_pars")
+#experiments <- "daily"
+
+options(future.globals.maxSize = 891289600)
 
 lake_directory <- here::here()
 
-starting_index <- 8
+starting_index <- 160
 use_s3 <- FALSE
 
 files.sources <- list.files(file.path(lake_directory, "R"), full.names = TRUE)
@@ -18,9 +29,9 @@ sapply(files.sources, source)
 config_set_name <- "glm_aed_ms1"
 site <- "fcre"
 configure_run_file <- "configure_aed_run.yml"
-config_files <- "configure_flare_glm_aed.yml"
+#config_files <- "configure_flare_glm_aed.yml"
 
-num_forecasts <- 52
+num_forecasts <- 52 * 2
 days_between_forecasts <- 7
 forecast_horizon <- 35
 starting_date <- as_date("2020-08-01")
@@ -29,12 +40,18 @@ second_date <- as_date("2021-01-01")
 
 all_dates <- seq.Date(starting_date,second_date + days(days_between_forecasts * num_forecasts), by = 1)
 
-date_list <- list(daily = all_dates,
-                  #no_da = starting_date,
-                  weekly = all_dates[seq(1,length(all_dates),by=7)],
-                  fortnightly = all_dates[seq(1,length(all_dates),by=14)],
-                  monthly = all_dates[seq(1,length(all_dates),by=28)])#,
-                  #no_da_pars = starting_date)
+potential_date_list <- list(daily = all_dates,
+                            no_da = starting_date,
+                            weekly = all_dates[seq(1,length(all_dates),by=7)],
+                            fortnightly = all_dates[seq(1,length(all_dates),by=14)],
+                            monthly = all_dates[seq(1,length(all_dates),by=28)],
+                            no_da_pars = starting_date,
+                            daily_no_pars = all_dates,
+                            daily_no_pars_2 = all_dates,
+                            daily_manual = all_dates)
+
+date_list <- potential_date_list[which(names(potential_date_list) %in% experiments)]
+
 models <- names(date_list)
 
 start_dates <- as_date(rep(NA, num_forecasts + 1))
@@ -133,6 +150,10 @@ cleaned_inflow_file <- inflow_data_combine(realtime_file = file.path(config_obs$
                                            input_file_tz = 'EST',
                                            site_id = config_obs$site_id)
 
+#read_csv(cleaned_inflow_file) |>
+#  mutate(observation = ifelse(variable == "PHS_frp", observation * 100, observation)) |>
+#  write_csv(cleaned_inflow_file)
+
 #' Clean up observed insitu measurements
 
 cleaned_insitu_file <- in_situ_qaqc_csv(insitu_obs_fname = file.path(config_obs$file_path$data_directory,config_obs$insitu_obs_fname),
@@ -146,14 +167,17 @@ cleaned_insitu_file <- in_situ_qaqc_csv(insitu_obs_fname = file.path(config_obs$
                                         lake_name_code = config_obs$site_id,
                                         config = config_obs)
 
-#FLAREr::put_targets(site_id = config_obs$site_id,
-#                    cleaned_insitu_file,
-#                    cleaned_met_file,
-#                    cleaned_inflow_file,
-#                    use_s3 = use_s3,
-#                    config)
+read_csv(cleaned_insitu_file) |>
+  filter((variable %in% c("NH4", "NO3NO2", "SRP", "TN", "TP") & depth == 1.5) |
+           variable %in% c("temperature", "oxygen", "secchi", "chla", "fdom")) |>
+  write_csv(cleaned_insitu_file)
+
 
 for(i in starting_index:nrow(sims)){
+
+
+  config_files <- "configure_flare_glm_aed_3groups_manual.yml"
+
 
   message(paste0("index: ", i))
   message(paste0("     Running model: ", sims$model[i], " "))
@@ -197,13 +221,21 @@ for(i in starting_index:nrow(sims)){
 
   run_config <- config$run_config
   yaml::write_yaml(run_config, file = file.path(lake_directory, "restart", site, sim_names, configure_run_file))
+  yaml::write_yaml(run_config, file = file.path(lake_directory,"configuration",config_set_name,configure_run_file))
 
-  config <- FLAREr::set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name, sim_name = sim_names)
+  config <- FLAREr::set_configuration(configure_run_file = configure_run_file ,lake_directory = lake_directory, config_set_name = config_set_name, sim_name = sim_names)
   config$model_settings$model <- model
   config$run_config$sim_name <- sim_names
   config <- FLAREr::get_restart_file(config, lake_directory)
 
-  pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
+  #if(model == "daily_no_pars_2"){
+  #  pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, "parameter_calibration_config_aed_2.csv"), col_types = readr::cols())
+  #}else{
+    #pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
+  #}
+
+  pars_config <- NULL
+
   obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
   states_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$states_config_file), col_types = readr::cols())
 
@@ -243,7 +275,9 @@ for(i in starting_index:nrow(sims)){
                    'OGM_dop',
                    'OGM_dopr',
                    'OGM_pop',
-                   'PHY_green')
+                   'PHY_cyano',
+                   'PHY_green',
+                   'PHY_diatom')
   }else{
     variables <- c("time", "FLOW", "TEMP", "SALT")
   }
@@ -287,6 +321,11 @@ for(i in starting_index:nrow(sims)){
   idx <- which(!full_time %in% date_list[[da_freq]])
   obs[, idx, ] <- NA
 
+  if(sims$model[i] != "daily_manual"){
+    idx <- which(obs_config$state_names_obs %in% c("NIT_amm","NIT_nit","NIT_total","PHS_frp","PHS_total"))
+    obs[idx, , ] <- NA
+  }
+
   obs_secchi_depth <- get_obs_secchi_depth(obs_file = file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")),
                                            start_datetime = config$run_config$start_datetime,
                                            end_datetime = config$run_config$end_datetime,
@@ -294,8 +333,8 @@ for(i in starting_index:nrow(sims)){
                                            forecast_horizon =  config$run_config$forecast_horizon,
                                            secchi_sd = 0.1)
 
-  obs_secchi_depth$obs_secchi$obs[] <- NA
   obs_secchi_depth$obs_depth[] <- NA
+  obs_secchi_depth$obs_secchi$obs[] <- NA
 
   states_config <- FLAREr::generate_states_to_obs_mapping(states_config, obs_config)
 
@@ -340,6 +379,9 @@ for(i in starting_index:nrow(sims)){
                                               endpoint = config$s3$forecasts_parquet$endpoint,
                                               local_directory = file.path(lake_directory, "forecasts/parquet"))
 
+  rm(da_forecast_output)
+  gc()
+
   FLAREr::generate_forecast_score_arrow(targets_file = file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")),
                                         forecast_df = forecast_df,
                                         use_s3 = use_s3,
@@ -348,11 +390,22 @@ for(i in starting_index:nrow(sims)){
                                         local_directory = file.path(lake_directory, "scores/parquet"),
                                         variable_type = c("state","parameter","diagnostic"))
 
-  message("Generating plot")
-  FLAREr::plotting_general_2(file_name = saved_file,
-                             target_file = file.path(config$file_path$qaqc_data_directory, paste0(config$location$site_id, "-targets-insitu.csv")),
-                             ncore = 2,
-                             obs_csv = FALSE)
+  rm(forecast_df)
+  gc()
+
+  #message("Generating plot")
+  #FLAREr::plotting_general_2(file_name = saved_file,
+  #                           target_file = file.path(config$file_path$qaqc_data_directory, paste0(config$location$site_id, "-targets-insitu.csv")),
+  #                           ncore = 2,
+  #                           obs_csv = FALSE)
+
+  #for (itm in ls()) {
+  #  print(formatC(c(itm, format(object.size(get(itm)), units = "MiB")),
+  #                format="d",
+  #                big.mark=",",
+  #                width=30),
+  #        quote=F)
+  #}
 
   FLAREr::put_forecast(saved_file, eml_file_name = NULL, config)
 

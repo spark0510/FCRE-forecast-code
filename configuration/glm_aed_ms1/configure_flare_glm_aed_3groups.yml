@@ -50,7 +50,7 @@ model_settings:
   model_name: glm_aed
   base_GLM_nml: glm3.nml
   base_AED_nml: aed2_3groups.nml
-  base_AED_phyto_pars_nml: aed_phyto_pars.csv
+  base_AED_phyto_pars_nml: aed_phyto_pars_3groups.csv
   base_AED_zoop_pars_nml: aed2_zoop_pars.nml
   modeled_depths:
   - 0.00
@@ -91,9 +91,9 @@ model_settings:
   - 8.75
   - 9.00
   - 9.25
-  par_config_file: parameter_calibration_config_aed.csv
+  par_config_file: parameter_calibration_config_aed_3groups.csv
   obs_config_file: observations_config_aed.csv
-  states_config_file: states_config_aed.csv
+  states_config_file: states_config_aed_3groups.csv
   depth_model_sd_config_file: depth_model_sd_aed.csv
 default_init:
   lake_depth: 9.4
@@ -143,14 +143,15 @@ output_settings:
   - PHY_green_fPho
   - PHY_green_fT
   - PHY_green_fNit
+  - PHY_cyano_fPho
+  - PHY_cyano_fT
+  - PHY_cyano_fNit
+  - PHY_diatom_fPho
+  - PHY_diatom_fT
+  - PHY_diatom_fNit
   - PHY_par
   - PHY_upt_dic
   - PHY_upt_po4
   - PHY_upt_n2
   - PHY_upt_nh4
   - PHY_upt_no3
-  - PHY_green_gpp_c
-  - PHY_green_rsp_c
-  - PHY_green_exc_c
-  - PHY_green_mor_c
-  - PHY_green_set_c
