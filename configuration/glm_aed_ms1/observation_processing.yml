@@ -100,8 +100,8 @@ specified_outflow1: fcre-manual-data/FCR_spillway_outflow_SUMMED_WeirWetland_201
 insitu_obs_fname:
     - fcre-catwalk-data-qaqc/fcre-waterquality_L1.csv
     - FCR_Catwalk_2018_2022.csv
-secchi_fname: Secchi_depth_2013-2020.csv
-ctd_fname: CTD_final_2013_2021.csv
+secchi_fname: Secchi_depth_2013-2022.csv
+ctd_fname: CTD_final_2013_2022.csv
 ch4_fname: Dissolved_CO2_CH4_Virginia_Reservoirs.csv
 silica_fname: silica_master_df.csv
 nutrients_fname: chemistry.csv
