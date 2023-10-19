@@ -204,7 +204,34 @@ forecast_df <- FLAREr::write_forecast_arrow(da_forecast_output = da_forecast_out
                                             endpoint = config$s3$forecasts_parquet$endpoint,
                                             local_directory = file.path(lake_directory, "forecasts/parquet"))
 
-vera_variables <- c("Temp_C_mean","Chla_ugL_mean", "DO_mgL_mean", "fDOM_QSU_mean", "NH4_ugL_sample", "NO3NO2_ugL_sample", "SRP_ugL_sample", "DIC_mgL_sample","Secchi_m_sample")
+vera_variables <- c("Temp_C_mean","Chla_ugL_mean", "DO_mgL_mean", "fDOM_QSU_mean", "NH4_ugL_sample",
+                    "NO3NO2_ugL_sample", "SRP_ugL_sample", "DIC_mgL_sample","Secchi_m_sample",
+                    "Bloom_binary_mean")
+
+bloom_binary <- forecast_df |>
+  dplyr::filter(depth == 1.6 & variable == "Chla_ugL_mean") |>
+  dplyr::mutate(over = ifelse(prediction > 20, 1, 0)) |>
+  dplyr::summarize(prediction = sum(over) / n(), .by = c(datetime, reference_datetime, pubDate, model_id, site_id, depth, variable)) |>
+  dplyr::mutate(family = "bernoulli",
+                parameter = "prob",
+                variable = "Bloom_binary_mean") |>
+  dplyr::rename(depth_m = depth) |>
+  dplyr::select(reference_datetime, datetime, model_id, site_id, depth_m, family, parameter, variable, prediction)
+
+#Not currently used
+ice_binary <- forecast_df |>
+  dplyr::filter(variable == "ice_thickness") |>
+  dplyr::mutate(over = ifelse(prediction > 0, 1, 0)) |>
+  dplyr::summarize(prediction = sum(over) / n(), .by = c(datetime, reference_datetime, pubDate, model_id, site_id, depth, variable)) |>
+  dplyr::mutate(family = "bernoulli",
+                parameter = "prob",
+                variable = "Ice_binary_",
+                depth = NA) |>
+  dplyr::rename(depth_m = depth) |>
+  dplyr::select(reference_datetime, datetime, model_id, site_id, depth_m, family, parameter, variable, prediction)
+
+
+
 
 vera4cast_df <- forecast_df |>
   dplyr::rename(depth_m = depth) |>
@@ -221,6 +248,8 @@ vera4cast_df <- forecast_df |>
                 variable = ifelse(variable == "secchi", "Secchi_m_sample", variable),
                 depth_m = ifelse(depth_m == 0.0, 0.1, depth_m)) |>
   dplyr::select(-pubDate,-forecast, -variable_type) |>
+  dplyr::mutate(parameter = as.character(parameter)) |>
+  dplyr::bind_rows(bloom_binary) |>
   dplyr::filter(variable %in% vera_variables) |>
   mutate(project_id = "vera4cast",
          model_id = config$run_config$sim_name,
