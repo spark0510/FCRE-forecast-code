@@ -268,7 +268,7 @@ vera4cast_df <- forecast_df |>
 
 file_name <- paste0(config$run_config$sim_name,
                     "-",
-                    lubridate::as_date(vera4cast_df$reference_datetime[1]),".csv.gz")
+                    lubridate::as_date(vera4cast_df$reference_datetime[1]),".csv")
 
 readr::write_csv(vera4cast_df, file = file_name)
 
