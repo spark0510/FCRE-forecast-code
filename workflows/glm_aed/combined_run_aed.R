@@ -64,7 +64,7 @@ variables <- c("datetime", "FLOW", "TEMP", "SALT",
                'PHY_diatom')
 
 
-targets_vera <- readr::read_csv("https://renc.osn.xsede.org/bio230121-bucket01/vera4cast/targets/duration=P1D/daily-inflow-targets.csv.gz")
+targets_vera <- readr::read_csv("https://renc.osn.xsede.org/bio230121-bucket01/vera4cast/targets/project_id=verat4cast/duration=P1D/daily-inflow-targets.csv.gz")
 
 inflow_hist_dates <- tibble(datetime = seq(min(targets_vera$datetime), max(targets_vera$datetime), by = "1 day"))
 
