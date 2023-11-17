@@ -225,7 +225,7 @@ ice_binary <- forecast_df |>
   dplyr::summarize(prediction = sum(over) / n(), .by = c(datetime, reference_datetime, pubDate, model_id, site_id, depth, variable)) |>
   dplyr::mutate(family = "bernoulli",
                 parameter = "prob",
-                variable = "Ice_binary_",
+                variable = "Ice_binary",
                 depth = NA) |>
   dplyr::rename(depth_m = depth) |>
   dplyr::select(reference_datetime, datetime, model_id, site_id, depth_m, family, parameter, variable, prediction)
