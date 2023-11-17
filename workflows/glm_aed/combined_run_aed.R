@@ -64,7 +64,7 @@ variables <- c("datetime", "FLOW", "TEMP", "SALT",
                'PHY_diatom')
 
 
-targets_vera <- readr::read_csv("https://renc.osn.xsede.org/bio230121-bucket01/vera4cast/targets/duration=P1D/daily-inflow-targets.csv.gz")
+targets_vera <- readr::read_csv("https://renc.osn.xsede.org/bio230121-bucket01/vera4cast/targets/project_id=vera4cast/duration=P1D/daily-inflow-targets.csv.gz")
 
 inflow_hist_dates <- tibble(datetime = seq(min(targets_vera$datetime), max(targets_vera$datetime), by = "1 day"))
 
@@ -136,7 +136,7 @@ inflow_outflow_files$inflow_file_names <- inflow_outflow_files$inflow_file_names
 inflow_outflow_files$outflow_file_names <- inflow_outflow_files$outflow_file_names[which(stringr::str_detect(inflow_outflow_files$outflow_file_names, "ens32", negate = TRUE))]
 
 
-readr::read_csv("https://renc.osn.xsede.org/bio230121-bucket01/vera4cast/targets/duration=P1D/daily-insitu-targets.csv.gz", show_col_types = FALSE) |>
+readr::read_csv("https://renc.osn.xsede.org/bio230121-bucket01/vera4cast/targets/project_id=vera4cast/duration=P1D/daily-insitu-targets.csv.gz", show_col_types = FALSE) |>
   dplyr::mutate(observation = ifelse(variable == "DO_mgL_mean", observation*1000*(1/32), observation),
                 observation = ifelse(variable == "fDOM_QSU_mean", -151.3407 + observation*29.62654, observation),
                 depth_m = ifelse(depth_m == 0.1, 0.0, depth_m)) |>
@@ -268,7 +268,7 @@ vera4cast_df <- forecast_df |>
 
 file_name <- paste0(config$run_config$sim_name,
                     "-",
-                    lubridate::as_date(vera4cast_df$reference_datetime[1]),".csv.gz")
+                    lubridate::as_date(vera4cast_df$reference_datetime[1]),".csv")
 
 readr::write_csv(vera4cast_df, file = file_name)
 
