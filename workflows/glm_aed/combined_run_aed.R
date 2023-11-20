@@ -218,7 +218,7 @@ forecast_df <- FLAREr::write_forecast_arrow(da_forecast_output = da_forecast_out
 
 vera_variables <- c("Temp_C_mean","Chla_ugL_mean", "DO_mgL_mean", "fDOM_QSU_mean", "NH4_ugL_sample",
                     "NO3NO2_ugL_sample", "SRP_ugL_sample", "DIC_mgL_sample","Secchi_m_sample",
-                    "Bloom_binary_mean","CH4_umolL_sample","Ice_binary_max")
+                    "Bloom_binary_mean","CH4_umolL_sample","IceCover_binary_max")
 
 # Calculate probablity of bloom
 bloom_binary <- forecast_df |>
