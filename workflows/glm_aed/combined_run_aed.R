@@ -28,10 +28,24 @@ obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory
 states_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$states_config_file), col_types = readr::cols())
 
 
+met_start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
+met_forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
+
+if(config$run_config$forecast_horizon > 16 & config$met$use_forecasted_met & !config$met$use_openmeteo){
+  met_forecast_start_datetime <- met_forecast_start_datetime - lubridate::days(1)
+  if(met_forecast_start_datetime < met_start_datetime){
+    met_start_datetime <- met_forecast_start_datetime
+    message("horizon is > 16 days so adjusting forecast_start_datetime in the met file generation to use yesterdays forecast. But adjusted forecast_start_datetime < start_datetime")
+  }
+}
+
+
+
+
 met_out <- FLAREr::generate_met_files_arrow(out_dir = config$file_path$execute_directory,
-                                      start_datetime = lubridate::as_datetime(config$run_config$start_datetime),
+                                      start_datetime = met_start_datetime,
                                       end_datetime = config$run_config$end_datetime,
-                                      forecast_start_datetime = lubridate::as_datetime(config$run_config$forecast_start_datetime),
+                                      forecast_start_datetime = met_forecast_start_datetime,
                                       forecast_horizon =  config$run_config$forecast_horizon,
                                       site_id = config$location$site_id,
                                       use_s3 = TRUE,
