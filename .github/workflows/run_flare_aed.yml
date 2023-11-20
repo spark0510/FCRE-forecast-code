@@ -18,6 +18,7 @@ jobs:
         shell: Rscript {0}
         run: |
           remotes::install_github('LTREB-reservoirs/ver4castHelpers')
+          install.packages('rLakeAnalyzer')
 
 # Point to the right path, run the right Rscript command
       - name: Run automatic prediction file
