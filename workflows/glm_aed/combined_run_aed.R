@@ -218,8 +218,9 @@ forecast_df <- FLAREr::write_forecast_arrow(da_forecast_output = da_forecast_out
 
 vera_variables <- c("Temp_C_mean","Chla_ugL_mean", "DO_mgL_mean", "fDOM_QSU_mean", "NH4_ugL_sample",
                     "NO3NO2_ugL_sample", "SRP_ugL_sample", "DIC_mgL_sample","Secchi_m_sample",
-                    "Bloom_binary_mean")
+                    "Bloom_binary_mean","CH4_umolL_sample","Ice_binary_max")
 
+# Calculate probablity of bloom
 bloom_binary <- forecast_df |>
   dplyr::filter(depth == 1.6 & variable == "Chla_ugL_mean") |>
   dplyr::mutate(over = ifelse(prediction > 20, 1, 0)) |>
@@ -230,19 +231,45 @@ bloom_binary <- forecast_df |>
   dplyr::rename(depth_m = depth) |>
   dplyr::select(reference_datetime, datetime, model_id, site_id, depth_m, family, parameter, variable, prediction)
 
-#Not currently used
+# Calculate probablity of having ice
 ice_binary <- forecast_df |>
   dplyr::filter(variable == "ice_thickness") |>
   dplyr::mutate(over = ifelse(prediction > 0, 1, 0)) |>
   dplyr::summarize(prediction = sum(over) / n(), .by = c(datetime, reference_datetime, pubDate, model_id, site_id, depth, variable)) |>
   dplyr::mutate(family = "bernoulli",
                 parameter = "prob",
-                variable = "Ice_binary",
+                variable = "IceCover_binary_max",
+                depth = NA) |>
+  dplyr::rename(depth_m = depth) |>
+  dplyr::select(reference_datetime, datetime, model_id, site_id, depth_m, family, parameter, variable, prediction)
+
+# Calculate probablity of being mixed
+min_depth <- 1
+max_depth <- 8
+threshold <- 0.1
+
+temp_forecast <- forecast_df |>
+  filter(depth %in% c(min_depth, max_depth),
+         variable == "Temp_C_mean") |>
+  pivot_wider(names_from = depth, names_prefix = 'wtr_', values_from = prediction)
+
+colnames(temp_forecast)[which(colnames(temp_forecast) == paste0('wtr_', min_depth))] <- 'min_depth'
+colnames(temp_forecast)[which(colnames(temp_forecast) == paste0('wtr_', max_depth))] <- 'max_depth'
+
+mix_binary <- temp_forecast |>
+  mutate(min_depth = rLakeAnalyzer::water.density(min_depth),
+         max_depth = rLakeAnalyzer::water.density(max_depth),
+         mixed = ifelse((max_depth - min_depth) < threshold, 1, 0)) |>
+  summarise(prediction = 100*(sum(mixed)/n()), .by = c(datetime, reference_datetime, pubDate, model_id, site_id, variable)) |>
+  dplyr::mutate(family = "bernoulli",
+                parameter = "prob",
+                variable = "Mixed_binary_sample",
                 depth = NA) |>
   dplyr::rename(depth_m = depth) |>
   dplyr::select(reference_datetime, datetime, model_id, site_id, depth_m, family, parameter, variable, prediction)
 
 
+# Combine into a vera data frame
 vera4cast_df <- forecast_df |>
   dplyr::rename(depth_m = depth) |>
   dplyr::mutate(prediction = ifelse(variable == "DO_mgL_mean", prediction/1000*(32),prediction),
@@ -255,11 +282,14 @@ vera4cast_df <- forecast_df |>
                 variable = ifelse(variable == "PHS_frp", "SRP_ugL_sample", variable),
                 prediction = ifelse(variable == "CAR_dic", prediction/1000/(1/52.515), prediction),
                 variable = ifelse(variable == "CAR_dic", "DIC_mgL_sample", variable),
+                variable = ifelse(variable == "CAR_ch4", "CH4_umolL_sample", variable),
                 variable = ifelse(variable == "secchi", "Secchi_m_sample", variable),
                 depth_m = ifelse(depth_m == 0.0, 0.1, depth_m)) |>
   dplyr::select(-pubDate,-forecast, -variable_type) |>
   dplyr::mutate(parameter = as.character(parameter)) |>
   dplyr::bind_rows(bloom_binary) |>
+  dplyr::bind_rows(ice_binary) |>
+  dplyr::bind_rows(mix_binary) |>
   dplyr::filter(variable %in% vera_variables) |>
   mutate(project_id = "vera4cast",
          model_id = config$run_config$sim_name,
@@ -278,18 +308,18 @@ vera4cast_df <- forecast_df |>
 
 file_name <- paste0(config$run_config$sim_name,
                     "-",
-                    lubridate::as_date(vera4cast_df$reference_datetime[1]),".csv")
+                    lubridate::as_date(vera4cast_df$reference_datetime[1]),".csv.gz")
 
 readr::write_csv(vera4cast_df, file = file_name)
 
 
 
-FLAREr::generate_forecast_score_arrow(targets_file = file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")),
-                                      forecast_df = forecast_df,
-                                      use_s3 = config$run_config$use_s3,
-                                      bucket = config$s3$scores$bucket,
-                                      endpoint = config$s3$scores$endpoint,
-                                      local_directory = file.path(lake_directory, "scores/parquet"))
+#FLAREr::generate_forecast_score_arrow(targets_file = file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")),
+#                                      forecast_df = forecast_df,
+#                                      use_s3 = config$run_config$use_s3,
+#                                      bucket = config$s3$scores$bucket,
+#                                      endpoint = config$s3$scores$endpoint,
+#                                      local_directory = file.path(lake_directory, "scores/parquet"))
 
 #message("Generating plot")
 #FLAREr::plotting_general_2(file_name = saved_file,
