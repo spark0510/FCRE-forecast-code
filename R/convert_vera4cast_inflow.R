@@ -77,7 +77,8 @@ glm_df_inflow <- forecast_df |>
   dplyr::mutate_if(is.numeric, round, 4) |>
   dplyr::select(dplyr::any_of(VARS)) |>
   tidyr::pivot_longer(-c("datetime","parameter"), names_to = "variable", values_to = "prediction") |>
-  dplyr::mutate(model_id = paste0("inflow-aed"),
+  dplyr::mutate(datetime = lubridate::as_date(datetime),
+                model_id = paste0("inflow-aed"),
                 site_id = "fcre",
                 family = "ensemble",
                 flow_type = "inflow",
@@ -89,7 +90,8 @@ glm_df_inflow <- forecast_df |>
 glm_df_outflow <- glm_df_inflow |>
   dplyr::select(datetime, parameter, variable, prediction) |>
   dplyr::filter(variable %in% c("FLOW","TEMP")) |>
-  dplyr::mutate(model_id = paste0("outflow-aed"),
+  dplyr::mutate(datetime = lubridate::as_date(datetime),
+                model_id = paste0("outflow-aed"),
                 site_id = "fcre",
                 family = "ensemble",
                 flow_type = "outflow",

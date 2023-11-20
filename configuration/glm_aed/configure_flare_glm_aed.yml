@@ -1,7 +1,9 @@
 s3:
   drivers:
-    endpoint: renc.osn.xsede.org
-    bucket: bio230121-bucket01/flare/drivers/met
+    endpoint: s3.flare-forecast.org
+    #endpoint: renc.osn.xsede.org
+    bucket: drivers/noaa/gefs-v12-reprocess
+    #bucket: bio230121-bucket01/flare/drivers/met
   inflow_drivers:
     endpoint: s3.flare-forecast.org
     bucket: drivers/testing/inflow/parquet
@@ -103,7 +105,7 @@ met:
    local_directory: .na
    observed_met_filename: .na
    use_ler_vars: FALSE
-   use_openmeteo: TRUE
+   use_openmeteo: FALSE
    openmeteo_api: ensemble_forecast
    openmeteo_model: gfs_seamless #ecmwf_ifs04
    use_openmeteo_archive: TRUE
