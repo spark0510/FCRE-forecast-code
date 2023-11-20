@@ -64,7 +64,8 @@ variables <- c("datetime", "FLOW", "TEMP", "SALT",
                'PHY_diatom')
 
 
-targets_vera <- readr::read_csv("https://renc.osn.xsede.org/bio230121-bucket01/vera4cast/targets/project_id=vera4cast/duration=P1D/daily-inflow-targets.csv.gz")
+targets_vera <- readr::read_csv("https://renc.osn.xsede.org/bio230121-bucket01/vera4cast/targets/project_id=vera4cast/duration=P1D/daily-inflow-targets.csv.gz",
+                                show_col_types = FALSE)
 
 inflow_hist_dates <- tibble(datetime = seq(min(targets_vera$datetime), max(targets_vera$datetime), by = "1 day"))
 
@@ -110,8 +111,8 @@ targets_vera |>
   dplyr::select(datetime, variable, observation) |>
   readr::write_csv(file.path(config$file_path$qaqc_data_directory, paste0(config$location$site_id, "-targets-inflow.csv")))
 
-  inflow_forecast_dir <- "inflow"
-  convert_vera4cast_inflow(reference_date = lubridate::as_date(config$run_config$forecast_start_datetime),
+inflow_forecast_dir <- "inflow"
+convert_vera4cast_inflow(reference_date = lubridate::as_date(config$run_config$forecast_start_datetime),
                            model_id = "inflow_gefsClimAED",
                            save_path = file.path(lake_directory, "drivers", inflow_forecast_dir))
 
@@ -229,8 +230,6 @@ ice_binary <- forecast_df |>
                 depth = NA) |>
   dplyr::rename(depth_m = depth) |>
   dplyr::select(reference_datetime, datetime, model_id, site_id, depth_m, family, parameter, variable, prediction)
-
-
 
 
 vera4cast_df <- forecast_df |>
