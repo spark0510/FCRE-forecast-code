@@ -30,7 +30,7 @@ if (DA_use == F) {
 config <- FLAREr::set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
 
 # Generate targets
-source(file.path(lake_directory, 'workflows', config_set_name, 'generate_targets.R'))
+source(file.path(lake_directory, 'workflows', config_set_name, 'generate_targets.R'), local = environment())
 message("Successfully generated targets")
 
 #' Move targets to s3 bucket
@@ -266,7 +266,7 @@ while(run_duration < max_runtime & noaa_ready == T){
   # set up restart files
 
   forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime) + lubridate::days(1)
-  start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime) - lubridate::days(5)
+  start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime) - lubridate::days(1)
   restart_file <- paste0(config$location$site_id,"-", (lubridate::as_date(forecast_start_datetime)- days(1)), "-",config$run_config$sim_name ,".nc")
 
   FLAREr::update_run_config2(lake_directory = lake_directory,
