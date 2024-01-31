@@ -1,22 +1,33 @@
 on:
-  workflow_dispatch:
   schedule:
-  - cron: "0 11 * * *"
+    - cron: '0 0 1 * *'
+  workflow_dispatch:
+
+name: keep automation
 
 jobs:
-  build:
+  write_small_file:
     runs-on: ubuntu-latest
-    container:
-      image: rqthomas/flare-rocker:4.2.1
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      OSN_KEY: ${{ secrets.OSN_KEY }}
+      OSN_SECRET: ${{ secrets.OSN_SECRET }}
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      - run: git config --system --add safe.directory '*'
+
+      - uses: actions/checkout@v3
         with:
-          fetch-depth: 0
-          
-# Point to the right path, run the right Rscript command
-      - name: Run automatic prediction file
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        run:  Rscript $GITHUB_WORKSPACE/workflows/defaultV2/combined_workflow.R
+           fetch-depth: 0
+           set-safe-directory: '*'
+
+      - name: Make small file
+        run: date >> keep_automation.txt
+
+      - name: Commit and Push
+        run: |
+          git pull
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add keep_automation.txt
+          git commit -a -m "keeping automation" || echo "nothing to commit"
+          git push https://${GITHUB_PAT}:${GITHUB_PAT}@github.com/${GITHUB_REPOSITORY}
