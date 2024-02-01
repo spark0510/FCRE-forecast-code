@@ -3,32 +3,7 @@ extract_CTD <- function(fname,
                         focal_depths,
                         config){
 
-  d_ctd <- readr::read_csv(fname,
-                col_types = list(
-                  Reservoir = readr::col_character(),
-                  Site = readr::col_character(),
-                  DateTime = readr::col_datetime(format = ""),
-                  Depth_m = readr::col_double(),
-                  Temp_C = readr::col_double(),
-                  DO_mgL = readr::col_double(),
-                  Cond_uScm = readr::col_double(),
-                  SpCond_uScm = readr::col_double(),
-                  Chla_ugL = readr::col_double(),
-                  Turbidity_NTU = readr::col_double(),
-                  pH = readr::col_double(),
-                  ORP_mV = readr::col_double(),
-                  PAR_umolm2s = readr::col_double(),
-                  DescRate_ms = readr::col_double(),
-                  Flag_Temp_C = readr::col_integer(),
-                  Flag_DO_mgL = readr::col_integer(),
-                  Flag_Cond_uScm = readr::col_integer(),
-                  Flag_SpCond_uScm = readr::col_integer(),
-                  Flag_Chla_ugL = readr::col_integer(),
-                  Flag_Turbidity_NTU = readr::col_integer(),
-                  Flag_pH = readr::col_integer(),
-                  Flag_ORP_mV = readr::col_integer(),
-                  Flag_PAR_umolm2s = readr::col_integer(),
-                  Flag_DescRate_ms = readr::col_integer())) %>%
+  d_ctd <- readr::read_csv(fname, show_col_types = FALSE) %>%
     dplyr::mutate(Date = lubridate::force_tz(DateTime, tzone = input_file_tz)) %>%
     dplyr::filter(Reservoir == "FCR" & Site == "50") %>%
     dplyr::select(Date, Depth_m, Temp_C, DO_mgL, Chla_ugL) %>%
