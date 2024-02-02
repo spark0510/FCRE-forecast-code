@@ -87,7 +87,7 @@ init <- FLAREr::generate_initial_conditions(states_config,
                                             config,
                                             historical_met_error = met_out$historical_met_error)
 #Run EnKF
-da_forecast_output <- profmem({FLAREr::run_da_forecast(states_init = init$states,
+da_forecast_output <- FLAREr::run_da_forecast(states_init = init$states,
                                               pars_init = init$pars,
                                               aux_states_init = init$aux_states_init,
                                               obs = obs,
@@ -106,7 +106,6 @@ da_forecast_output <- profmem({FLAREr::run_da_forecast(states_init = init$states
                                               par_fit_method = config$da_setup$par_fit_method,
                                               obs_secchi = NULL,
                                               obs_depth = NULL)
-})
 
 message("Writing netcdf")
 saved_file <- FLAREr::write_forecast_netcdf(da_forecast_output = da_forecast_output,
