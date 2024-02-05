@@ -27,7 +27,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run:  Rscript $GITHUB_WORKSPACE/workflows/glm_aed/combined_run_aed.R
 
-       - name: Healthcheck
+      - name: Healthcheck
         run: |
           curl -m 10 --retry 5 https://hc-ping.com/3de1338c-ee1f-4327-b547-d4c582929d6e
 
