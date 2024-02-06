@@ -17,7 +17,7 @@ configure_run_file <- "configure_run.yml"
 
 noaa_ready <- TRUE
 
-while(noaa_ready){
+#while(noaa_ready){
 
   config <- FLAREr::set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name)
   config <- FLAREr::get_restart_file(config, lake_directory)
@@ -376,11 +376,11 @@ while(noaa_ready){
   Sys.setenv("AWS_ACCESS_KEY_ID" = var1,
              "AWS_SECRET_ACCESS_KEY" = var2)
 
-  noaa_ready <- FLAREr::check_noaa_present_arrow(lake_directory,
-                                                 configure_run_file,
-                                                 config_set_name = config_set_name)
+ # noaa_ready <- FLAREr::check_noaa_present_arrow(lake_directory,
+ #                                                configure_run_file,
+ #                                                config_set_name = config_set_name)
 
-}
+#}
 
 
 
