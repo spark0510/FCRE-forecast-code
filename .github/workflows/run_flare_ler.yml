@@ -10,7 +10,7 @@ jobs:
       image: rqthomas/flare-rocker:4.2.1
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Run GOTM forecast with DA
@@ -25,7 +25,7 @@ jobs:
       image: rqthomas/flare-rocker:4.2.1
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Run Simstrat forecast with DA

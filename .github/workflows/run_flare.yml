@@ -10,10 +10,10 @@ jobs:
       image: rqthomas/flare-rocker:4.2.1
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
+
 # Point to the right path, run the right Rscript command
       - name: Run automatic prediction file
         env:
