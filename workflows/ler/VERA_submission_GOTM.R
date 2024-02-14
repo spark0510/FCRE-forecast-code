@@ -39,7 +39,7 @@ flare_dates <- as_datetime(sort(flare_dates))
 submissions <- arrow::open_dataset("s3://anonymous@bio230121-bucket01/vera4cast/forecasts/parquet/project_id=vera4cast/duration=P1D/variable=Temp_C_mean?endpoint_override=renc.osn.xsede.org") |>
   filter(model_id == vera_model_name) |>
   distinct(reference_datetime) |>
-  pull()
+  pull(as_vector = T)
 
 # which depths have observations and will be evaluated in VERA
 targets <- read_csv("https://renc.osn.xsede.org/bio230121-bucket01/vera4cast/targets/project_id=vera4cast/duration=P1D/daily-insitu-targets.csv.gz") |>
