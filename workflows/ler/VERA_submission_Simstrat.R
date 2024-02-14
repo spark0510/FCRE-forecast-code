@@ -1,7 +1,9 @@
 library(tidyverse)
 library(arrow)
 library(lubridate)
+remotes::install_github("LTREB-reservoirs/vera4castHelpers")
 
+vera4castHelpers::ignore_sigpipe()
 
 Sys.unsetenv("AWS_ACCESS_KEY_ID")
 Sys.unsetenv("AWS_SECRET_ACCESS_KEY")
