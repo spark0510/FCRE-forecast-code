@@ -7,26 +7,26 @@ file_path:
    forecast_output_directory: .na
 s3:
   drivers:
-    endpoint: s3.flare-forecast.org
-    bucket: drivers/noaa/gefs-v12-reprocess
+    endpoint: renc.osn.xsede.org
+    bucket: bio230121-bucket01/vt_backup/drivers/noaa/gefs-v12-reprocess
   inflow_drivers:
-    endpoint: s3.flare-forecast.org
-    bucket: drivers/inflow/fcre_v2/parquet
+    endpoint: renc.osn.xsede.org
+    bucket: bio230121-bucket01/vt_backup/drivers/inflow/fcre_v2/parquet
   targets:
-    endpoint: s3.flare-forecast.org
-    bucket: targets/fcre_v2
+    endpoint: renc.osn.xsede.org
+    bucket: bio230121-bucket01/vt_backup/targets/fcre_v2
   forecasts:
-    endpoint: s3.flare-forecast.org
-    bucket: forecasts
+    endpoint: renc.osn.xsede.org
+    bucket: bio230121-bucket01/vt_backup/forecasts
   forecasts_parquet:
-    endpoint: s3.flare-forecast.org
-    bucket: forecasts/parquet
+    endpoint: renc.osn.xsede.org
+    bucket: bio230121-bucket01/vt_backup/forecasts/parquet
   warm_start:
-    endpoint: s3.flare-forecast.org
-    bucket: restart/fcre_v2
+    endpoint: renc.osn.xsede.org
+    bucket: bio230121-bucket01/vt_backup/restart/fcre_v2
   scores:
-    endpoint: s3.flare-forecast.org
-    bucket: scores/parquet
+    endpoint: renc.osn.xsede.org
+    bucket: bio230121-bucket01/vt_backup/scores/parquet
 location:
    site_id: fcre
    name: Falling Creek Reservoir
