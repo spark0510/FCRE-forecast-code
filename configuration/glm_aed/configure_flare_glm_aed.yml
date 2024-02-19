@@ -1,30 +1,30 @@
 s3:
   drivers:
-    endpoint: s3.flare-forecast.org
-    #endpoint: renc.osn.xsede.org
-    bucket: drivers/noaa/gefs-v12-reprocess
+    #endpoint: s3.flare-forecast.org
+    endpoint: renc.osn.xsede.org
+    bucket: bio230121-bucket01/vt_backup/drivers/noaa/gefs-v12-reprocess
     #bucket: bio230121-bucket01/flare/drivers/met
   inflow_drivers:
-    endpoint: s3.flare-forecast.org
-    bucket: drivers/testing/inflow/parquet
+    endpoint: renc.osn.xsede.org
+    bucket: bio230121-bucket01/vt_backup/drivers/testing/inflow/parquet
   analysis:
-    endpoint: s3.flare-forecast.org
-    bucket: analysis/testing
+    endpoint: renc.osn.xsede.org
+    bucket: bio230121-bucket01/vt_backup/analysis/testing
   targets:
-    endpoint: s3.flare-forecast.org
-    bucket: targets/testing
+    endpoint: renc.osn.xsede.org
+    bucket: bio230121-bucket01/vt_backup/targets/testing
   forecasts:
-    endpoint: s3.flare-forecast.org
-    bucket: forecasts/testing
+    endpoint: renc.osn.xsede.org
+    bucket: bio230121-bucket01/vt_backup/forecasts/testing
   forecasts_parquet:
-    endpoint: s3.flare-forecast.org
-    bucket: forecasts/testing/parquet
+    endpoint: renc.osn.xsede.org
+    bucket: bio230121-bucket01/vt_backup/forecasts/testing/parquet
   warm_start:
-    endpoint: s3.flare-forecast.org
-    bucket: restart/testing
+    endpoint: renc.osn.xsede.org
+    bucket: bio230121-bucket01/vt_backup/restart/testing
   scores:
-    endpoint: s3.flare-forecast.org
-    bucket: scores/testing/parquet
+    endpoint: renc.osn.xsede.org
+    bucket: bio230121-bucket01/vt_backup/scores/testing/parquet
 location:
    site_id: fcre
    name: Falling Creek Reservoir
