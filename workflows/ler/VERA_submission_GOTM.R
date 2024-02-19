@@ -19,8 +19,12 @@ force <- FALSE
 
 
 # get the forecast from the FLARE bucket
-forecasts <- arrow::s3_bucket(bucket = "forecasts/parquet",
-                              endpoint_override = "s3.flare-forecast.org",
+# forecasts <- arrow::s3_bucket(bucket = "forecasts/parquet",
+#                               endpoint_override = "s3.flare-forecast.org",
+#                               anonymous = TRUE)
+
+forecasts <- arrow::s3_bucket(bucket = "bio230121-bucket01/vt_backup/forecasts/parquet",
+                              endpoint_override = "renc.osn.xsede.org",
                               anonymous = TRUE)
 
 this_year <- as.character(paste0(seq.Date(as_date('2024-01-01'), Sys.Date(), by = 'day'), ' 00:00:00'))
@@ -74,7 +78,9 @@ for (i in 1:length(flare_dates)) {
       # Need only the depths for which there are observations
       dplyr::filter(depth %in% eval_depths) %>%
       dplyr::mutate(model_id = vera_model_name,
-                    reference_datetime = gsub(' 00:00:00', '', reference_datetime))%>%
+                    reference_datetime = gsub(' 00:00:00', '', reference_datetime),
+                    variable = ifelse(variable == 'temperature', 'Temp_C_mean', variable)) |>
+      dplyr::filter(variable %in% unique(targets$variable)) |>
       dplyr::rename(depth_m = depth) |>
       dplyr::select(c('datetime', 'reference_datetime', 'site_id', 'family', 'depth_m',
                       'parameter', 'variable', 'prediction', 'model_id')) |>
