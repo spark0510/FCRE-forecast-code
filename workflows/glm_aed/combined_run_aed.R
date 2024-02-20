@@ -4,8 +4,9 @@ set.seed(100)
 
 options(future.globals.maxSize= 891289600)
 
-Sys.setenv("AWS_DEFAULT_REGION" = "s3",
-           "AWS_S3_ENDPOINT" = "flare-forecast.org")
+Sys.setenv("AWS_DEFAULT_REGION" = "renc",
+           "AWS_S3_ENDPOINT" = "osn.xsede.org",
+           "USE_HTTPS" = TRUE)
 
 lake_directory <- here::here()
 
