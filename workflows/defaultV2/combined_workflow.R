@@ -1,4 +1,4 @@
-readRenviron("~/.Renviron") # MUST come first
+#readRenviron("~/.Renviron") # MUST come first
 library(tidyverse)
 library(lubridate)
 lake_directory <- here::here()
@@ -7,6 +7,8 @@ forecast_site <<- "fcre"
 configure_run_file <<- "configure_run.yml"
 update_run_config <<- TRUE
 config_set_name <<- "defaultV2"
+
+Sys.setenv("USE_HTTPS" = TRUE)
 
 config <- FLAREr::set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name)
 
