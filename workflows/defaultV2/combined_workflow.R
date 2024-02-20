@@ -8,7 +8,9 @@ configure_run_file <<- "configure_run.yml"
 update_run_config <<- TRUE
 config_set_name <<- "defaultV2"
 
-Sys.setenv("USE_HTTPS" = TRUE)
+Sys.setenv("AWS_DEFAULT_REGION" = "renc",
+           "AWS_S3_ENDPOINT" = "osn.xsede.org",
+           "USE_HTTPS" = TRUE)
 
 config <- FLAREr::set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name)
 
