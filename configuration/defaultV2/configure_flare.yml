@@ -14,7 +14,7 @@ s3:
     bucket: bio230121-bucket01/flare/drivers/inflow/fcre/parquet
   targets:
     endpoint: renc.osn.xsede.org
-    bucket: bio230121-bucket01/vt_backup/targets/fcre
+    bucket: bio230121-bucket01/flare/targets/fcre
   forecasts:
     endpoint: renc.osn.xsede.org
     bucket: bio230121-bucket01/flare/forecasts
