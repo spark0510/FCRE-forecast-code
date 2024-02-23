@@ -8,25 +8,25 @@ file_path:
 s3:
   drivers:
     endpoint: renc.osn.xsede.org
-    bucket: bio230121-bucket01/vt_backup/drivers/noaa/gefs-v12-reprocess
+    bucket: bio230121-bucket01/flare/drivers/met/gefs-v12
   inflow_drivers:
     endpoint: renc.osn.xsede.org
-    bucket: bio230121-bucket01/vt_backup/drivers/inflow/fcre_v2/parquet
+    bucket: bio230121-bucket01/flare/drivers/inflow/fcre/parquet
   targets:
     endpoint: renc.osn.xsede.org
-    bucket: bio230121-bucket01/vt_backup/targets/fcre_v2
+    bucket: bio230121-bucket01/vt_backup/targets/fcre
   forecasts:
     endpoint: renc.osn.xsede.org
-    bucket: bio230121-bucket01/vt_backup/forecasts
+    bucket: bio230121-bucket01/flare/forecasts
   forecasts_parquet:
     endpoint: renc.osn.xsede.org
-    bucket: bio230121-bucket01/vt_backup/forecasts/parquet
+    bucket: bio230121-bucket01/flare/forecasts/parquet
   warm_start:
     endpoint: renc.osn.xsede.org
-    bucket: bio230121-bucket01/vt_backup/restart/fcre_v2
+    bucket: bio230121-bucket01/flare/restart/fcre
   scores:
     endpoint: renc.osn.xsede.org
-    bucket: bio230121-bucket01/vt_backup/scores/parquet
+    bucket: bio230121-bucket01/flare/scores/parquet
 location:
    site_id: fcre
    name: Falling Creek Reservoir
