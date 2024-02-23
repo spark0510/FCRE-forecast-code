@@ -11,19 +11,19 @@ s3:
     bucket: bio230121-bucket01/flare/drivers/met/gefs-v12
   inflow_drivers:
     endpoint: renc.osn.xsede.org
-    bucket: bio230121-bucket01/flare/drivers/inflow/fcre/parquet
+    bucket: bio230121-bucket01/flare/drivers/inflow/fcre/lm_ar
   targets:
     endpoint: renc.osn.xsede.org
     bucket: bio230121-bucket01/flare/targets/fcre
   forecasts:
     endpoint: renc.osn.xsede.org
-    bucket: bio230121-bucket01/flare/forecasts
+    bucket: bio230121-bucket01/flare/forecasts/netcdf
   forecasts_parquet:
     endpoint: renc.osn.xsede.org
     bucket: bio230121-bucket01/flare/forecasts/parquet
   warm_start:
     endpoint: renc.osn.xsede.org
-    bucket: bio230121-bucket01/flare/restart/fcre
+    bucket: bio230121-bucket01/flare/restart
   scores:
     endpoint: renc.osn.xsede.org
     bucket: bio230121-bucket01/flare/scores/parquet
