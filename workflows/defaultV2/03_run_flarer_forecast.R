@@ -121,14 +121,12 @@ forecast_df <- FLAREr::write_forecast_arrow(da_forecast_output = da_forecast_out
 
 message("Writing arrow score")
 
-message("Grabbing last 16-days of forecasts")
-reference_datetime_format <- "%Y-%m-%d %H:%M:%S"
 past_days <- lubridate::as_date(forecast_df$reference_datetime[1]) - lubridate::days(config$run_config$forecast_horizon)
 
 vars <- FLAREr:::arrow_env_vars()
 s3 <- arrow::s3_bucket(bucket = config$s3$forecasts_parquet$bucket, endpoint_override = config$s3$forecasts_parquet$endpoint)
 past_forecasts <- arrow::open_dataset(s3) |>
-  dplyr::mutate(reference_date = lubridate::as_date(reference_date))
+  dplyr::mutate(reference_date = lubridate::as_date(reference_date)) |>
   dplyr::filter(model_id == forecast_df$model_id[1],
                 site_id == forecast_df$site_id[1],
                 reference_date > past_days) |>
@@ -186,6 +184,6 @@ if (config$run_config$use_s3) {
 
 
 
-#FLAREr::update_run_config(config, lake_directory, configure_run_file, saved_file, new_horizon = 16, day_advance = 1)
+#FLAREr::update_run_config(config, lake_directory, configure_run_file, saved_file, new_horizon = 34, day_advance = 1)
 
 message(paste0("successfully generated flare forecats for: ", basename(saved_file)))
