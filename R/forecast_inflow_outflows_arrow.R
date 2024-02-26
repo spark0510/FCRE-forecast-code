@@ -35,8 +35,8 @@ forecast_inflows_outflows_arrow <- function(inflow_obs,
         stop("inflow forecast function needs bucket and endpoint if use_s3=TRUE")
       }
       vars <- FLAREr:::arrow_env_vars()
-      forecast_dir <- arrow::s3_bucket(bucket = file.path(met_bucket, "stage2/parquet", lubridate::hour(forecast_start_datetime), forecast_date, site_id),
-                                       endpoint_override =  met_endpoint)
+      forecast_dir <- arrow::s3_bucket(bucket = file.path(met_bucket, paste0("stage2/reference_datetime=",forecast_date),paste0("site_id=",site_id)),
+                                       endpoint_override =  met_endpoint, anonymous = TRUE)
       FLAREr:::unset_arrow_vars(vars)
     }else{
       if(is.null(met_local_directory)){
@@ -134,8 +134,8 @@ forecast_inflows_outflows_arrow <- function(inflow_obs,
         dplyr::mutate(FLOW = NA,
                       TEMP = NA)
 
-      df$FLOW[1] <- init_flow[ens]
-      df$TEMP[1] <- init_temp[ens]
+      df$FLOW[1] <- init_flow[ens+1]
+      df$TEMP[1] <- init_temp[ens+1]
 
       if(inflow_process_uncertainty == TRUE){
         inflow_error <- rnorm(nrow(df), 0, inflow_model_coeff$future_inflow_flow_error)
