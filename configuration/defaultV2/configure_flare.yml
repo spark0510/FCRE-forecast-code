@@ -117,6 +117,10 @@ inflow:
    forecast_inflow_model: FLOWS-NOAAGEFS-AR1
 met:
    use_forecasted_met: TRUE
+   use_observed_met: FALSE
+   local_directory: .na
+   observed_met_filename: .na
+   use_ler_vars: FALSE
    forecast_lag_days: 1
 uncertainty:
    observation: TRUE
