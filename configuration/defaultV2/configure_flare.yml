@@ -117,6 +117,7 @@ inflow:
    forecast_inflow_model: FLOWS-NOAAGEFS-AR1
 met:
    use_forecasted_met: TRUE
+   forecast_lag_days: 1
 uncertainty:
    observation: TRUE
    process: TRUE
