@@ -3,9 +3,9 @@ library(lubridate)
 
 lake_directory <- here::here()
 setwd(lake_directory)
-forecast_site <- "bvre"
+forecast_site <- "fcre"
 configure_run_file <- "configure_run.yml"
-config_set_name <- "default"
+config_set_name <- "defaultV2"
 
 source("R/in_situ_qaqc.R")
 source("R/temp_oxy_chla_qaqc.R")
