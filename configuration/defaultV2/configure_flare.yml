@@ -115,6 +115,10 @@ default_init:
 inflow:
    use_forecasted_inflow: TRUE
    forecast_inflow_model: FLOWS-NOAAGEFS-AR1
+   include_inflow: FALSE
+   observed_inflow_filename: NA
+   inflow_variables: NA
+   use_ler_vars: FALSE
 met:
    use_forecasted_met: TRUE
    use_observed_met: FALSE
