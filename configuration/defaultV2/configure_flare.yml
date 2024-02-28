@@ -14,7 +14,7 @@ s3:
     bucket: bio230121-bucket01/flare/drivers/inflow/fcre/lm_ar
   targets:
     endpoint: renc.osn.xsede.org
-    bucket: bio230121-bucket01/flare/targets/fcre
+    bucket: bio230121-bucket01/flare/targets
   forecasts:
     endpoint: renc.osn.xsede.org
     bucket: bio230121-bucket01/flare/forecasts/netcdf
