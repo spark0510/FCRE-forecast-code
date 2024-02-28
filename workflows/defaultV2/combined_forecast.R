@@ -13,12 +13,12 @@ Sys.setenv("AWS_DEFAULT_REGION" = "renc",
 
 FLAREr::ignore_sigpipe()
 
+message("Beginning generate targets")
+source(file.path("workflows", config_set_name, "01_generate_targets.R"))
+
 noaa_ready <- TRUE
 
 while(noaa_ready){
-
-  message("Beginning generate targets")
-  source(file.path("workflows", config_set_name, "01_generate_targets.R"))
 
   message("Generating inflow forecast")
   source(file.path("workflows", config_set_name, "02_run_inflow_forecast.R"))

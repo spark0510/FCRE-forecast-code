@@ -2,6 +2,10 @@
 library(tidyverse)
 library(lubridate)
 
+Sys.setenv("AWS_DEFAULT_REGION" = "renc",
+           "AWS_S3_ENDPOINT" = "osn.xsede.org",
+           "USE_HTTPS" = TRUE)
+
 FLAREr:::ignore_sigpipe()
 
 if(file.exists("~/.aws")){
