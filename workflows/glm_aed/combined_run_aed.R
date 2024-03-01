@@ -245,7 +245,7 @@ noaa_ready <- TRUE
   bloom_binary <- forecast_df |>
     dplyr::filter(depth == 1.6 & variable == "Chla_ugL_mean") |>
     dplyr::mutate(over = ifelse(prediction > 20, 1, 0)) |>
-    dplyr::summarize(prediction = sum(over) / n(), .by = c(datetime, reference_datetime, pubDate, model_id, site_id, depth, variable)) |>
+    dplyr::summarize(prediction = sum(over) / n(), .by = c(datetime, reference_datetime, model_id, site_id, depth, variable)) |> #pubDate
     dplyr::mutate(family = "bernoulli",
                   parameter = "prob",
                   variable = "Bloom_binary_mean") |>
@@ -256,7 +256,7 @@ noaa_ready <- TRUE
   ice_binary <- forecast_df |>
     dplyr::filter(variable == "ice_thickness") |>
     dplyr::mutate(over = ifelse(prediction > 0, 1, 0)) |>
-    dplyr::summarize(prediction = sum(over) / n(), .by = c(datetime, reference_datetime, pubDate, model_id, site_id, depth, variable)) |>
+    dplyr::summarize(prediction = sum(over) / n(), .by = c(datetime, reference_datetime, model_id, site_id, depth, variable)) |> #pubDate
     dplyr::mutate(family = "bernoulli",
                   parameter = "prob",
                   variable = "IceCover_binary_max",
@@ -281,7 +281,7 @@ noaa_ready <- TRUE
     mutate(min_depth = rLakeAnalyzer::water.density(min_depth),
            max_depth = rLakeAnalyzer::water.density(max_depth),
            mixed = ifelse((max_depth - min_depth) < threshold, 1, 0)) |>
-    summarise(prediction = 100*(sum(mixed)/n()), .by = c(datetime, reference_datetime, pubDate, model_id, site_id, variable)) |>
+    summarise(prediction = 100*(sum(mixed)/n()), .by = c(datetime, reference_datetime, model_id, site_id, variable)) |> #pubDate
     dplyr::mutate(family = "bernoulli",
                   parameter = "prob",
                   variable = "Mixed_binary_sample",
@@ -306,7 +306,7 @@ noaa_ready <- TRUE
                   variable = ifelse(variable == "CAR_ch4", "CH4_umolL_sample", variable),
                   variable = ifelse(variable == "secchi", "Secchi_m_sample", variable),
                   depth_m = ifelse(depth_m == 0.0, 0.1, depth_m)) |>
-    dplyr::select(-pubDate,-forecast, -variable_type) |>
+    dplyr::select(-forecast, -variable_type) |> #pubDate
     dplyr::mutate(parameter = as.character(parameter)) |>
     dplyr::bind_rows(bloom_binary) |>
     dplyr::bind_rows(ice_binary) |>
