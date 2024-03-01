@@ -72,7 +72,7 @@ noaa_ready <- TRUE
   #                                               bucket = config$s3$drivers$bucket,
   #                                               endpoint = config$s3$drivers$endpoint)
 
-  variables <- c("datetime", "FLOW", "TEMP", "SALT",
+  variables <- c("time", "FLOW", "TEMP", "SALT",
                  'OXY_oxy',
                  'CAR_dic',
                  'CAR_ch4',
