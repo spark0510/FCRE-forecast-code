@@ -1,30 +1,25 @@
 s3:
   drivers:
-    #endpoint: s3.flare-forecast.org
     endpoint: renc.osn.xsede.org
-    bucket: bio230121-bucket01/vt_backup/drivers/noaa/gefs-v12-reprocess
-    #bucket: bio230121-bucket01/flare/drivers/met
+    bucket: bio230121-bucket01/flare/drivers/met/gefs-v12
   inflow_drivers:
     endpoint: renc.osn.xsede.org
-    bucket: bio230121-bucket01/vt_backup/drivers/testing/inflow/parquet
-  analysis:
-    endpoint: renc.osn.xsede.org
-    bucket: bio230121-bucket01/vt_backup/analysis/testing
+    bucket: bio230121-bucket01/flare/drivers/inflow/fcre/lm_ar
   targets:
     endpoint: renc.osn.xsede.org
-    bucket: bio230121-bucket01/vt_backup/targets/testing
+    bucket: bio230121-bucket01/flare/targets
   forecasts:
     endpoint: renc.osn.xsede.org
-    bucket: bio230121-bucket01/vt_backup/forecasts/testing
+    bucket: bio230121-bucket01/flare/forecasts/netcdf
   forecasts_parquet:
     endpoint: renc.osn.xsede.org
-    bucket: bio230121-bucket01/vt_backup/forecasts/testing/parquet
+    bucket: bio230121-bucket01/flare/forecasts/parquet
   warm_start:
     endpoint: renc.osn.xsede.org
-    bucket: bio230121-bucket01/vt_backup/restart/testing
+    bucket: bio230121-bucket01/flare/restart
   scores:
     endpoint: renc.osn.xsede.org
-    bucket: bio230121-bucket01/vt_backup/scores/testing/parquet
+    bucket: bio230121-bucket01/flare/scores/parquet
 location:
    site_id: fcre
    name: Falling Creek Reservoir
@@ -38,6 +33,7 @@ da_setup:
     no_negative_states: TRUE
     assimilate_first_step: FALSE
     use_obs_constraint: TRUE
+    obs_filename: fcre-targets-insitu.csv
 model_settings:
    ncore: 4
    model_name: glm_aed
@@ -109,6 +105,7 @@ met:
    openmeteo_api: ensemble_forecast
    openmeteo_model: gfs_seamless #ecmwf_ifs04
    use_openmeteo_archive: TRUE
+   forecast_lag_days: 1
 uncertainty:
    observation: TRUE
    process: TRUE
@@ -119,3 +116,5 @@ uncertainty:
    inflow_process: TRUE
 output_settings:
    diagnostics_names:  [extc]
+   evaluate_past: FALSE
+   variables_in_scores: [state, parameter]
