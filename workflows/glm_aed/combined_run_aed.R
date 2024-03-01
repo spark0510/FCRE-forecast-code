@@ -56,7 +56,7 @@ noaa_ready <- TRUE
                                               use_s3 = TRUE,
                                               bucket = config$s3$drivers$bucket,
                                               endpoint = config$s3$drivers$endpoint,
-                                              use_siteid_s3 = TRUE)
+                                              use_hive_met = TRUE)
 
   # met_out <- FLAREr::generate_met_files_openmet(out_dir = config$file_path$execute_directory,
   #                                               start_datetime = lubridate::as_datetime(config$run_config$start_datetime),
