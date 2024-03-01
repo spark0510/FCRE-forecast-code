@@ -72,7 +72,7 @@ noaa_ready <- TRUE
   #                                               bucket = config$s3$drivers$bucket,
   #                                               endpoint = config$s3$drivers$endpoint)
 
-  variables <- c("time", "FLOW", "TEMP", "SALT",
+  variables <- c("datetime", "FLOW", "TEMP", "SALT",
                  'OXY_oxy',
                  'CAR_dic',
                  'CAR_ch4',
@@ -146,6 +146,8 @@ noaa_ready <- TRUE
                            model_id = "inflow_gefsClimAED",
                            save_path = file.path(lake_directory, "drivers", inflow_forecast_dir))
 
+  ## fix datetime object to match the format needed for inflow/outflow function below
+  variables[1] <- 'time'
 
   inflow_outflow_files <- FLAREr::create_inflow_outflow_files_arrow(inflow_forecast_dir = inflow_forecast_dir,
                                                                     inflow_obs = file.path(config$file_path$qaqc_data_directory, paste0(config$location$site_id, "-targets-inflow.csv")),
