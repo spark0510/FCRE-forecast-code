@@ -14,14 +14,14 @@ Sys.setenv("AWS_DEFAULT_REGION" = "renc",
 FLAREr::ignore_sigpipe()
 
 message("Beginning generate targets")
-source(file.path("workflows", config_set_name, "01_generate_targets.R"))
+source(file.path(lake_directory, "workflows", config_set_name, "01_generate_targets.R"))
 
 noaa_ready <- TRUE
 
 while(noaa_ready){
 
   message("Generating inflow forecast")
-  source(file.path("workflows", config_set_name, "02_run_inflow_forecast.R"))
+  source(file.path(lake_directory, "workflows", config_set_name, "02_run_inflow_forecast.R"))
 
   # Run FLARE
   output <- FLAREr::run_flare(lake_directory = lake_directory,
