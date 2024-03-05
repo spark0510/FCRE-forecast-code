@@ -20,17 +20,20 @@ noaa_ready <- TRUE
 
 while(noaa_ready){
 
-  ## add temporary check to catch if noaa data DNE
-  forecast_dir <- arrow::s3_bucket(bucket = file.path(config$s3$drivers$bucket,
-                                                      paste0("stage2/reference_datetime=",config$run_config$forecast_start_datetime),
-                                                      paste0("site_id=",config$location$site_id)),
-                                   endpoint_override =  config$s3$drivers$endpoint, anonymous = TRUE)
-
-  t <- try(arrow::open_dataset(forecast_dir) |> collect())
-  if("try-error" %in% class(t)){
-    warning('NOAA DATA NOT FOUND FOR THIS DAY')
-    stop()
+  if (as.Date(config$run_config$forecast_start_datetime) == Sys.Date()){
+    stop('Stop here to keep action from failing')
   }
+
+  # ## add temporary check to catch if noaa data DNE
+  # forecast_dir <- arrow::s3_bucket(bucket = file.path(config$s3$drivers$bucket,
+  #                                                     paste0("stage2/reference_datetime=",as.Date(config$run_config$forecast_start_datetime)),
+  #                                                     paste0("site_id=",config$location$site_id)),
+  #                                  endpoint_override =  config$s3$drivers$endpoint, anonymous = TRUE)
+  #
+  # t <- try(arrow::open_dataset(forecast_dir) |> collect(), silent = TRUE)
+  # if("try-error" %in% class(t)){
+  #   stop('NOAA DATA NOT FOUND FOR THIS DAY')
+  # }
 
 
   message("Generating inflow forecast")
