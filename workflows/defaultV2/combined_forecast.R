@@ -20,9 +20,9 @@ noaa_ready <- TRUE
 
 while(noaa_ready){
 
-  if (as.Date(config$run_config$forecast_start_datetime) == Sys.Date()){
-    stop('Stop here to keep action from failing')
-  }
+  # if (as.Date(config$run_config$forecast_start_datetime) == Sys.Date()){
+  #   stop('Stop here to keep action from failing')
+  # }
 
   # ## add temporary check to catch if noaa data DNE
   # forecast_dir <- arrow::s3_bucket(bucket = file.path(config$s3$drivers$bucket,

@@ -18,7 +18,7 @@ forecast_inflows_outflows_arrow <- function(inflow_obs,
 
   lake_name_code <- site_id
 
-  forecast_date <- lubridate::as_date(forecast_start_datetime)
+  forecast_date <- lubridate::as_date(forecast_start_datetime) - lubridate::days(1)
   forecast_hour <- lubridate::hour(forecast_start_datetime)
 
   if (forecast_horizon > 0) {
