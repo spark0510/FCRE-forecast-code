@@ -111,7 +111,7 @@ read_csv(cleaned_insitu_file, show_col_types = FALSE) |>
 
 config <- FLAREr::set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
 
-file.copy(file.path(config$file_path$data_directory,"FCR_SSS_inflow_2013_2021_20220413_allfractions_2DOCpools.csv"),
+file.copy(file.path(config$file_path$configuration_directory,"FCR_SSS_inflow_2013_2021_20220413_allfractions_2DOCpools.csv"),
           file.path(config$file_path$execute_directory,"FCR_SSS_inflow_2013_2021_20220413_allfractions_2DOCpools.csv"))
 
 config <- FLAREr::set_configuration(configure_run_file = configure_run_file ,lake_directory = lake_directory, config_set_name = config_set_name)
