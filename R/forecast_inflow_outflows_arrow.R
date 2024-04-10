@@ -7,11 +7,15 @@ forecast_inflows_outflows_arrow <- function(inflow_obs,
                                             site_id,
                                             use_s3_met = TRUE,
                                             use_s3_inflow = FALSE,
-                                            met_bucket = NULL,
-                                            met_endpoint = NULL,
+                                            met_server_name = NULL,
+                                            met_folder = NULL,
+                                            inflow_server_name = NULL,
+                                            inflow_folder = NULL,                                            
+                                            #met_bucket = NULL,
+                                            #met_endpoint = NULL,
                                             met_local_directory = NULL,
-                                            inflow_bucket = NULL,
-                                            inflow_endpoint = NULL,
+                                            #inflow_bucket = NULL,
+                                            #inflow_endpoint = NULL,
                                             inflow_local_directory = NULL,
                                             forecast_start_datetime,
                                             forecast_horizon = 0){
@@ -31,13 +35,15 @@ forecast_inflows_outflows_arrow <- function(inflow_obs,
   if(!is.null(forecast_date)){
 
     if(use_s3_met){
-      if(is.null(met_bucket) | is.null(met_endpoint)){
-        stop("inflow forecast function needs bucket and endpoint if use_s3=TRUE")
+      if(is.null(met_server_name) | is.null(met_folder)){
+        stop("inflow forecast function needs server name and folder if use_s3=TRUE")
       }
-      vars <- FLAREr:::arrow_env_vars()
-      forecast_dir <- arrow::s3_bucket(bucket = file.path(met_bucket, paste0("stage2/reference_datetime=",forecast_date),paste0("site_id=",site_id)),
-                                       endpoint_override =  met_endpoint, anonymous = TRUE)
-      FLAREr:::unset_arrow_vars(vars)
+      #vars <- FLAREr:::arrow_env_vars()
+      #forecast_dir <- arrow::s3_bucket(bucket = file.path(met_bucket, paste0("stage2/reference_datetime=",forecast_date),paste0("site_id=",site_id)),
+      #                                 endpoint_override =  met_endpoint, anonymous = TRUE)
+      forecast_dir <- FaaSr::faasr_arrow_s3_bucket(server_name=met_server_name, 
+                                                   faasr_prefix=file.path(met_folder, paste0("stage2/reference_datetime=",forecast_date),paste0("site_id=",site_id)))
+      #FLAREr:::unset_arrow_vars(vars)
     }else{
       if(is.null(met_local_directory)){
         stop("inflow forecast function needs local_directory if use_s3=FALSE")
@@ -84,9 +90,11 @@ forecast_inflows_outflows_arrow <- function(inflow_obs,
 
 
       if(use_s3_inflow){
-        FLAREr:::arrow_env_vars()
-        inflow_s3_previous <- arrow::s3_bucket(bucket = file.path(inflow_bucket, previous_run_dir), endpoint_override = inflow_endpoint, anonymous = TRUE)
-        on.exit(FLAREr:::unset_arrow_vars(vars))
+        #FLAREr:::arrow_env_vars()
+        #inflow_s3_previous <- arrow::s3_bucket(bucket = file.path(inflow_bucket, previous_run_dir), endpoint_override = inflow_endpoint, anonymous = TRUE)
+        #on.exit(FLAREr:::unset_arrow_vars(vars))
+        inflow_s3_previous <- FaaSr::faasr_arrow_s3_bucket(server_name=inflow_server_name, 
+                                                           faasr_prefix=file.path(inflow_folder, previous_run_dir))
       }else{
         inflow_s3_previous <- arrow::SubTreeFileSystem$create(file.path(output_dir,previous_run_dir))
       }
@@ -225,9 +233,11 @@ forecast_inflows_outflows_arrow <- function(inflow_obs,
     noaa_met, obs_met, init_flow, init_temp)
 
     if(use_s3_inflow){
-      FLAREr:::arrow_env_vars()
-      inflow_s3 <- arrow::s3_bucket(bucket = file.path(inflow_bucket, inflow_forecast_path), endpoint_override = inflow_endpoint)
-      on.exit(FLAREr:::unset_arrow_vars(vars))
+      #FLAREr:::arrow_env_vars()
+      #inflow_s3 <- arrow::s3_bucket(bucket = file.path(inflow_bucket, inflow_forecast_path), endpoint_override = inflow_endpoint)
+      #on.exit(FLAREr:::unset_arrow_vars(vars))
+      inflow_s3 <- FaaSr::faasr_arrow_s3_bucket(server_name=inflow_server_name, 
+                                                faasr_prefix=file.path(inflow_folder, inflow_forecast_path))
     }else{
       inflow_s3 <- arrow::SubTreeFileSystem$create(file.path(inflow_local_directory, inflow_forecast_path))
     }

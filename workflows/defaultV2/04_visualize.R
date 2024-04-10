@@ -3,6 +3,8 @@
 library(tidyverse)
 library(lubridate)
 
+server_name <- "My_Minio_Bucket"
+
 lake_directory <- here::here()
 files.sources <- list.files(file.path(lake_directory, "R"), full.names = TRUE)
 sapply(files.sources, source)
@@ -37,12 +39,17 @@ png_file_name <- manager_plot(file_name = config$run_config$restart_file,
                               focal_depths = c(1, 5, 8))
 
 if(config$run_config$use_s3 & !is.na(png_file_name)){
-  success <- aws.s3::put_object(file = png_file_name,
-                                object = file.path(config$location$site_id, basename(png_file_name)),
-                                bucket = "analysis",
-                                region = "s3",
-                                base_url = "flare-forecast.org",
-                                use_https = as.logical(Sys.getenv("USE_HTTPS")))
+  #success <- aws.s3::put_object(file = png_file_name,
+  #                              object = file.path(config$location$site_id, basename(png_file_name)),
+  #                              bucket = "analysis",
+  #                              region = "s3",
+  #                              base_url = "flare-forecast.org",
+  #                              use_https = as.logical(Sys.getenv("USE_HTTPS")))
+  success <- FaaSr::faasr_put_file(server_name = server_name,
+                                   remote_folder = config$location$site_id,
+                                   remote_file = basename(png_file_name), 
+                                   local_folder = ".",
+                                   local_file = png_file_name)
   if(success){
     unlink(png_file_name)
   }

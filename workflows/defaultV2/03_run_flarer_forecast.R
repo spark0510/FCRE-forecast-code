@@ -2,16 +2,16 @@
 library(tidyverse)
 library(lubridate)
 
-Sys.setenv("AWS_DEFAULT_REGION" = "renc",
-           "AWS_S3_ENDPOINT" = "osn.xsede.org",
-           "USE_HTTPS" = TRUE)
+#Sys.setenv("AWS_DEFAULT_REGION" = "renc",
+#           "AWS_S3_ENDPOINT" = "osn.xsede.org",
+#           "USE_HTTPS" = TRUE)
 
 FLAREr:::ignore_sigpipe()
 
-if(file.exists("~/.aws")){
-  warning(paste("Detected existing AWS credentials file in ~/.aws,",
-                "Consider renaming these so that automated upload will work"))
-}
+#if(file.exists("~/.aws")){
+#  warning(paste("Detected existing AWS credentials file in ~/.aws,",
+#                "Consider renaming these so that automated upload will work"))
+#}
 
 lake_directory <- here::here()
 update_run_config <- TRUE
@@ -42,8 +42,10 @@ met_out <- FLAREr::generate_met_files_arrow(obs_met_file = file.path(config$file
                                             forecast_horizon =  config$run_config$forecast_horizon,
                                             site_id = config$location$site_id,
                                             use_s3 = TRUE,
-                                            bucket = config$s3$drivers$bucket,
-                                            endpoint = config$s3$drivers$endpoint,
+                                            server_name = config$s3$drivers$server_name,
+                                            folder = config$s3$drivers$folder,
+                                            #bucket = config$s3$drivers$bucket,
+                                            #endpoint = config$s3$drivers$endpoint,
                                             local_directory = NULL,
                                             use_forecast = TRUE,
                                             use_ler_vars = FALSE)
@@ -69,8 +71,10 @@ inflow_outflow_files <- FLAREr::create_inflow_outflow_files_arrow(inflow_forecas
                                                                   forecast_horizon =  config$run_config$forecast_horizon,
                                                                   site_id = config$location$site_id,
                                                                   use_s3 = config$run_config$use_s3,
-                                                                  bucket = config$s3$inflow_drivers$bucket,
-                                                                  endpoint = config$s3$inflow_drivers$endpoint,
+                                                                  server_name = config$s3$inflow_drivers$server_name,
+                                                                  folder = config$s3$inflow_drivers$folder,
+                                                                  #bucket = config$s3$inflow_drivers$bucket,
+                                                                  #endpoint = config$s3$inflow_drivers$endpoint,
                                                                   local_directory = file.path(lake_directory, "drivers/inflow", inflow_forecast_dir),
                                                                   use_forecast = TRUE,
                                                                   use_ler_vars = FALSE)
@@ -119,16 +123,20 @@ saved_file <- FLAREr::write_forecast_netcdf(da_forecast_output = da_forecast_out
 message("Writing arrow forecast")
 forecast_df <- FLAREr::write_forecast_arrow(da_forecast_output = da_forecast_output,
                                             use_s3 = config$run_config$use_s3,
-                                            bucket = config$s3$forecasts_parquet$bucket,
-                                            endpoint = config$s3$forecasts_parquet$endpoint,
+                                            server_name = config$s3$forecasts_parquet$server_name,
+                                            folder = config$s3$forecasts_parquet$folder,
+                                            #bucket = config$s3$forecasts_parquet$bucket,
+                                            #endpoint = config$s3$forecasts_parquet$endpoint,
                                             local_directory = file.path(lake_directory, "forecasts/parquet"))
 
 message("Writing arrow score")
 
 past_days <- lubridate::as_date(forecast_df$reference_datetime[1]) - lubridate::days(config$run_config$forecast_horizon)
 
-vars <- FLAREr:::arrow_env_vars()
-s3 <- arrow::s3_bucket(bucket = config$s3$forecasts_parquet$bucket, endpoint_override = config$s3$forecasts_parquet$endpoint)
+#vars <- FLAREr:::arrow_env_vars()
+#s3 <- arrow::s3_bucket(bucket = config$s3$forecasts_parquet$bucket, endpoint_override = config$s3$forecasts_parquet$endpoint)
+s3 <- FaaSr::faasr_arrow_s3_bucket(server_name=config$s3$forecasts_parquet$server_name, 
+                                   faasr_prefix=inflow_folder)
 past_forecasts <- arrow::open_dataset(s3) |>
   dplyr::mutate(reference_date = lubridate::as_date(reference_date)) |>
   dplyr::filter(model_id == forecast_df$model_id[1],
@@ -136,7 +144,7 @@ past_forecasts <- arrow::open_dataset(s3) |>
                 reference_date > past_days) |>
   dplyr::collect()
 
-FLAREr:::unset_arrow_vars(vars)
+#FLAREr:::unset_arrow_vars(vars)
 
 message("Combining forecasts")
 combined_forecasts <- dplyr::bind_rows(forecast_df, past_forecasts)
@@ -148,8 +156,10 @@ message("Scoring forecasts")
 FLAREr::generate_forecast_score_arrow(targets_file = file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")),
                                       forecast_df = combined_forecasts,
                                       use_s3 = config$run_config$use_s3,
-                                      bucket = config$s3$scores$bucket,
-                                      endpoint = config$s3$scores$endpoint,
+                                      server_name = config$s3$scores$server_name,
+                                      folder = config$s3$scores$folder,
+                                      #bucket = config$s3$scores$bucket,
+                                      #endpoint = config$s3$scores$endpoint,
                                       local_directory = file.path(lake_directory, "scores/parquet"),
                                       variable_types = c("state","parameter"))
 
@@ -176,14 +186,19 @@ yaml::write_yaml(config$run_config, file = file.path(lake_directory,
                                                      "restart", config$location$site_id, config$run_config$sim_name,
                                                      configure_run_file))
 if (config$run_config$use_s3) {
-  aws.s3::put_object(file = file.path(lake_directory, "restart",
-                                      config$location$site_id, config$run_config$sim_name,
-                                      configure_run_file), object = file.path(stringr::str_split_fixed(config$s3$warm_start$bucket,
-                                                                                                       "/", n = 2)[2], config$location$site_id, config$run_config$sim_name,
-                                                                              configure_run_file), bucket = stringr::str_split_fixed(config$s3$warm_start$bucket,
-                                                                                                                                     "/", n = 2)[1], region = stringr::str_split_fixed(config$s3$warm_start$endpoint,
-                                                                                                                                                                                       pattern = "\\.", n = 2)[1], base_url = stringr::str_split_fixed(config$s3$warm_start$endpoint,
-                                                                                                                                                                                                                                                       pattern = "\\.", n = 2)[2], use_https = as.logical(Sys.getenv("USE_HTTPS")))
+  #aws.s3::put_object(file = file.path(lake_directory, "restart",
+  #                                    config$location$site_id, config$run_config$sim_name,
+  #                                    configure_run_file), object = file.path(stringr::str_split_fixed(config$s3$warm_start$bucket,
+  #                                                                                                     "/", n = 2)[2], config$location$site_id, config$run_config$sim_name,
+  #                                                                            configure_run_file), bucket = stringr::str_split_fixed(config$s3$warm_start$bucket,
+  #                                                                                                                                   "/", n = 2)[1], region = stringr::str_split_fixed(config$s3$warm_start$endpoint,
+  #                                                                                                                                                                                     pattern = "\\.", n = 2)[1], base_url = stringr::str_split_fixed(config$s3$warm_start$endpoint,
+  #                                                                                                                                                                                                                                                     pattern = "\\.", n = 2)[2], use_https = as.logical(Sys.getenv("USE_HTTPS")))
+  FaaSr::faasr_put_file(server_name = config$s3$warm_start$server_name,
+                        remote_folder = file.path(config$s3$warm_start$folder, config$location$site_id, config$run_config$sim_name), 
+                        remote_file = configure_run_file,
+                        local_folder = file.path(lake_directory, "restart", config$location$site_id, config$run_config$sim_name)
+                        local_file = configure_run_file)
 }
 
 
