@@ -1,5 +1,5 @@
 
-generate_targets <- function(){
+generate_targets <- function(config_set_name, configure_run_file){
   #renv::restore()
 
   library(tidyverse)

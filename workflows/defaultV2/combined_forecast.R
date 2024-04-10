@@ -10,6 +10,54 @@ combined_forecast <- function(){
   configure_run_file <- "configure_run.yml"
   config_set_name <- "defaultV2"
 
+  FaaSr::faasr_get_file(server_name="My_Minio_Bucket"
+                        remote_folder="configuration/default", 
+                        remote_file="configure_flare.yml", 
+                        local_folder="configuration/default", 
+                        local_file="configure_flare.yml")
+  
+  FaaSr::faasr_get_file(server_name="My_Minio_Bucket"
+                        remote_folder="configuration/default", 
+                        remote_file="configure_run.yml", 
+                        local_folder="configuration/default", 
+                        local_file="configure_run.yml")
+
+  FaaSr::faasr_get_file(server_name="My_Minio_Bucket"
+                        remote_folder="configuration/default", 
+                        remote_file="depth_model_sd.csv", 
+                        local_folder="configuration/default", 
+                        local_file="depth_model_sd.csv")
+  
+  FaaSr::faasr_get_file(server_name="My_Minio_Bucket"
+                        remote_folder="configuration/default", 
+                        remote_file="glm3.nml", 
+                        local_folder="configuration/default", 
+                        local_file="glm3.nml")
+
+  FaaSr::faasr_get_file(server_name="My_Minio_Bucket"
+                        remote_folder="configuration/default", 
+                        remote_file="observation_processing.yml", 
+                        local_folder="configuration/default", 
+                        local_file="observation_processing.yml")
+
+  FaaSr::faasr_get_file(server_name="My_Minio_Bucket"
+                        remote_folder="configuration/default", 
+                        remote_file="observations_config.csv", 
+                        local_folder="configuration/default", 
+                        local_file="observations_config.csv")
+
+  FaaSr::faasr_get_file(server_name="My_Minio_Bucket"
+                        remote_folder="configuration/default", 
+                        remote_file="parameter_calibration_config.csv", 
+                        local_folder="configuration/default", 
+                        local_file="parameter_calibration_config.csv")
+
+  FaaSr::faasr_get_file(server_name="My_Minio_Bucket"
+                        remote_folder="configuration/default", 
+                        remote_file="states_config.csv", 
+                        local_folder="configuration/default", 
+                        local_file="states_config.csv")
+
   #Sys.setenv("AWS_DEFAULT_REGION" = "renc",
   #           "AWS_S3_ENDPOINT" = "osn.xsede.org",
   #           "USE_HTTPS" = TRUE)

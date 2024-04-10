@@ -15,8 +15,8 @@
             "Writable": "TRUE"
         },
         "FLARE_S3_Bucket": {
-            "Endpoint": "osn.xsede.org",
-            "Region": "renc",
+            "Endpoint": "renc.osn.xsede.org",
+            "Region": "",
             "Bucket": "bio230121-bucket01",
             "Writable": "TRUE",
             "Anonymous": "TRUE"
