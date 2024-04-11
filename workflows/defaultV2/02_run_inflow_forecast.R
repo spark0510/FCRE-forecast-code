@@ -4,10 +4,10 @@ run_inflow_forecast <- function(config_set_name, configure_run_file){
   library(tidyverse)
   library(lubridate)
 
-  lake_directory <- here::here()
+  #lake_directory <- here::here()
 
-  files.sources <- list.files(file.path(lake_directory, "R"), full.names = TRUE)
-  sapply(files.sources, source)
+  #files.sources <- list.files(file.path(lake_directory, "R"), full.names = TRUE)
+  #sapply(files.sources, source)
 
   configure_run_file <- "configure_run.yml"
   config <- FLAREr::set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name)

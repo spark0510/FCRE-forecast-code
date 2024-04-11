@@ -22,7 +22,6 @@ combined_forecast <- function(){
                         local_file=conf_file)
   }
   
-
   #Sys.setenv("AWS_DEFAULT_REGION" = "renc",
   #           "AWS_S3_ENDPOINT" = "osn.xsede.org",
   #           "USE_HTTPS" = TRUE)
@@ -31,7 +30,7 @@ combined_forecast <- function(){
 
   message("Beginning generate targets")
   #source(file.path(lake_directory, "workflows", config_set_name, "01_generate_targets.R"))
-  generate_targets(config_set_name, configure_run_file)
+  config <- generate_targets(config_set_name, configure_run_file)
 
   noaa_ready <- TRUE
 
