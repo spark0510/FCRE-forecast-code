@@ -4,7 +4,7 @@ run_inflow_forecast <- function(config_set_name, configure_run_file, lake_direct
   library(tidyverse)
   library(lubridate)
 
-  lake_directory <- here::here()
+  #lake_directory <- here::here()
 
   #files.sources <- list.files(file.path(lake_directory, "R"), full.names = TRUE)
   #sapply(files.sources, source)
