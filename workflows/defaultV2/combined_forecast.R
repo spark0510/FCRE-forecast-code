@@ -26,7 +26,7 @@ combined_forecast <- function(){
   #           "AWS_S3_ENDPOINT" = "osn.xsede.org",
   #           "USE_HTTPS" = TRUE)
 
-  FLAREr::ignore_sigpipe()
+  #FLAREr::ignore_sigpipe()
 
   message("Beginning generate targets")
   #source(file.path(lake_directory, "workflows", config_set_name, "01_generate_targets.R"))
