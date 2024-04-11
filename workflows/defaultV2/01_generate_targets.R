@@ -10,7 +10,7 @@ generate_targets <- function(config_set_name, configure_run_file){
 
   #' Set the lake directory to the repository directory
 
-  #lake_directory <- here::here()
+  lake_directory <- here::here()
 
 
   #' Source the R files in the repository
