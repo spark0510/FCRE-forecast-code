@@ -1,4 +1,4 @@
-run_inflow_forecast <- function(config_set_name, configure_run_file){
+run_inflow_forecast <- function(config_set_name, configure_run_file, lake_directory){
   #renv::restore()
 
   library(tidyverse)

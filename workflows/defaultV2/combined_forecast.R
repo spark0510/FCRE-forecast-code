@@ -30,7 +30,7 @@ combined_forecast <- function(){
 
   message("Beginning generate targets")
   #source(file.path(lake_directory, "workflows", config_set_name, "01_generate_targets.R"))
-  config <- generate_targets(config_set_name, configure_run_file)
+  config <- generate_targets(config_set_name, configure_run_file, lake_directory)
 
   noaa_ready <- TRUE
 
@@ -54,7 +54,7 @@ combined_forecast <- function(){
 
     message("Generating inflow forecast")
     #source(file.path(lake_directory, "workflows", config_set_name, "02_run_inflow_forecast.R"))
-    run_inflow_forecast(config_set_name, configure_run_file)
+    run_inflow_forecast(config_set_name, configure_run_file, lake_directory)
 
     # Run FLARE
     output <- FLAREr::run_flare(lake_directory = lake_directory,

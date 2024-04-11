@@ -1,5 +1,5 @@
 
-generate_targets <- function(config_set_name, configure_run_file){
+generate_targets <- function(config_set_name, configure_run_file, lake_directory){
   #renv::restore()
 
   library(tidyverse)
@@ -8,21 +8,24 @@ generate_targets <- function(config_set_name, configure_run_file){
   message("Beginning generate targets")
   message(config_set_name)
 
-  #' Set the lake directory to the repository directory
+  # Set the lake directory to the repository directory
 
-  lake_directory <- here::here()
+  #lake_directory <- here::here()
 
-
-  #' Source the R files in the repository
+  # Source the R files in the repository
 
   #files.sources <- list.files(file.path(lake_directory, "R"), full.names = TRUE)
   #sapply(files.sources, source)
 
-  #' Generate the `config_obs` object and create directories if necessary
+  # Generate the `config_obs` object and create directories if necessary
 
+  message("Generate the `config_obs` object")
   config_obs <- FLAREr::initialize_obs_processing(lake_directory, observation_yml = "observation_processing.yml", config_set_name)
+
+  message("Generate the `config` object")
   config <- FLAREr::set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name)
 
+  message("Clone or pull from data repositories")
 
   #' Clone or pull from data repositories
 
@@ -43,6 +46,7 @@ generate_targets <- function(config_set_name, configure_run_file){
   #             git_repo = "https://github.com/FLARE-forecast/FCRE-data.git")
 
   #' Download files from EDI
+  message("Download files from EDI")
 
   FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi/389/7/02d36541de9088f2dd99d79dc3a7a853",
                       file = config_obs$met_raw_obs_fname[2],
