@@ -57,7 +57,7 @@ faasr_in_situ_qaqc_csv <- function(config_set_name, configure_run_file){
                                           config = config_obs)
 
   FLAREr::put_targets(site_id = config_obs$site_id,
-                      cleaned_insitu_file
+                      cleaned_insitu_file,
                       use_s3 = config$run_config$use_s3,
                       config = config)
 }
