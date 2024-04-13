@@ -19,10 +19,10 @@ faasr_run_flare <- function(config_set_name, configure_run_file){
                         local_file=conf_file)
   }    
 
-  FLAREr::get_targets(lake_directory, config)
-
   configure_run_file <- "configure_run.yml"
   config <- FLAREr::set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name)
+
+  FLAREr::get_targets(lake_directory, config)
 
   output <- FLAREr::run_flare(lake_directory = lake_directory,
                                 configure_run_file = configure_run_file,
