@@ -29,17 +29,11 @@ generate_targets <- function(config_set_name, configure_run_file, lake_directory
 
   #' Clone or pull from data repositories
 
-  FLAREr::get_git_repo(lake_directory,
-                      directory = config_obs$realtime_insitu_location,
-                      git_repo = "https://github.com/FLARE-forecast/FCRE-data.git")
 
-  FLAREr::get_git_repo(lake_directory,
-                      directory = config_obs$realtime_met_station_location,
-                      git_repo = "https://github.com/FLARE-forecast/FCRE-data.git")
 
-  FLAREr::get_git_repo(lake_directory,
-                      directory = config_obs$realtime_inflow_data_location,
-                      git_repo = "https://github.com/FLARE-forecast/FCRE-data.git")
+
+
+
 
   #get_git_repo(lake_directory,
   #             directory = config_obs$manual_data_location,
@@ -56,17 +50,11 @@ generate_targets <- function(config_set_name, configure_run_file, lake_directory
                       file = config_obs$insitu_obs_fname[2],
                       lake_directory)
 
-  FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi/198/11/81f396b3e910d3359907b7264e689052",
-                      file = config_obs$secchi_fname,
-                      lake_directory)
 
-  FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi/200/13/27ceda6bc7fdec2e7d79a6e4fe16ffdf",
-                      file = config_obs$ctd_fname,
-                      lake_directory)
 
-  FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi/199/11/509f39850b6f95628d10889d66885b76",
-                      file = config_obs$nutrients_fname,
-                      lake_directory)
+
+
+
 
 
   FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi/202/10/c065ff822e73c747f378efe47f5af12b",
@@ -77,18 +65,11 @@ generate_targets <- function(config_set_name, configure_run_file, lake_directory
                       file = "silica_master_df.csv",
                       lake_directory)
 
-  FLAREr::get_edi_file(edi_https = "https://pasta.lternet.edu/package/data/eml/edi/551/7/38d72673295864956cccd6bbba99a1a3",
-                      file = "Dissolved_CO2_CH4_Virginia_Reservoirs.csv",
-                      lake_directory)
+
 
   message("Clean up observed meterology")
 
-  cleaned_met_file <- met_data_bind(realtime_file = file.path(config_obs$file_path$data_directory, config_obs$met_raw_obs_fname[1]),
-                                  qaqc_file = file.path(config_obs$file_path$data_directory, config_obs$met_raw_obs_fname[2]),
-                                  cleaned_met_file = file.path(config_obs$file_path$targets_directory, config_obs$site_id,paste0("observed-met_",config_obs$site_id,".csv")),
-                                  input_file_tz = "EST",
-                                  nldas = NULL,
-                                  site_id = config_obs$site_id)
+
 
   # cleaned_met_file <- met_qaqc_csv(realtime_file = file.path(config_obs$file_path$data_directory, config_obs$met_raw_obs_fname[1]),
   #                                  qaqc_file = file.path(config_obs$file_path$data_directory, config_obs$met_raw_obs_fname[2]),
@@ -99,27 +80,11 @@ generate_targets <- function(config_set_name, configure_run_file, lake_directory
 
   message("Clean up observed inflow")
 
-  cleaned_inflow_file <- inflow_data_combine(realtime_file = file.path(config_obs$file_path$data_directory, config_obs$inflow_raw_file1[1]),
-                                        qaqc_file = file.path(config_obs$file_path$data_directory, config_obs$inflow_raw_file1[2]),
-                                        nutrients_file = file.path(config_obs$file_path$data_directory, config_obs$nutrients_fname),
-                                        silica_file = file.path(config_obs$file_path$data_directory,  config_obs$silica_fname),
-                                        co2_ch4 = file.path(config_obs$file_path$data_directory, config_obs$ch4_fname),
-                                        cleaned_inflow_file = file.path(config_obs$file_path$targets_directory, config_obs$site_id, paste0(config_obs$site_id,"-targets-inflow.csv")),
-                                        input_file_tz = 'EST',
-                                        site_id = config_obs$site_id)
+
 
   message("Clean up observed insitu measurements")
 
-  cleaned_insitu_file <- in_situ_qaqc_csv(insitu_obs_fname = file.path(config_obs$file_path$data_directory,config_obs$insitu_obs_fname),
-                                          data_location = config_obs$file_path$data_directory,
-                                          maintenance_file = file.path(config_obs$file_path$data_directory,config_obs$maintenance_file),
-                                          ctd_fname = file.path(config_obs$file_path$data_directory, config_obs$ctd_fname),
-                                          nutrients_fname =  file.path(config_obs$file_path$data_directory, config_obs$nutrients_fname),
-                                          secchi_fname = file.path(config_obs$file_path$data_directory, config_obs$secchi_fname),
-                                          ch4_fname = file.path(config_obs$file_path$data_directory, config_obs$ch4_fname),
-                                          cleaned_insitu_file = file.path(config_obs$file_path$targets_directory, config_obs$site_id, paste0(config_obs$site_id,"-targets-insitu.csv")),
-                                          lake_name_code = config_obs$site_id,
-                                          config = config_obs)
+
   #' Move targets to s3 bucket
 
   message("Successfully generated targets")

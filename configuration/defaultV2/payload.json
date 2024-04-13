@@ -15,7 +15,7 @@
             "Writable": "TRUE"
         },
         "FLARE_S3_Bucket": {
-            "Endpoint": "renc.osn.xsede.org",
+            "Endpoint": "https://renc.osn.xsede.org",
             "Region": "",
             "Bucket": "bio230121-bucket01",
             "Writable": "TRUE",
@@ -23,32 +23,110 @@
         }
     },
     "FunctionList": {
-        "faasr_flare_test": {
-            "FunctionName": "faasr_flare_test",
-            "FaaSServer": "My_GitHub_Account"
+        "start": {
+            "FunctionName": "nullstart",
+            "FaaSServer": "My_GitHub_Account",
+            "InvokeNext": [
+                "met_data",
+                "inflow_data",
+                "in_situ"
+            ]
+        },
+        "met_data": {
+            "FunctionName": "faasr_in_situ_qaqc_csv",
+            "FaaSServer": "My_GitHub_Account",
+            "Arguments": {
+                "config_set_name": "defaultV2",
+                "configure_run_file": "configure_run.yml"
+            },
+            "InvokeNext": "run_inflow"
+        },
+        "inflow_data": {
+            "FunctionName": "faasr_met_data_bind",
+            "FaaSServer": "My_GitHub_Account",
+            "Arguments": {
+                "config_set_name": "defaultV2",
+                "configure_run_file": "configure_run.yml"
+            },
+            "InvokeNext": "run_inflow"
+        },
+        "in_situ": {
+            "FunctionName": "faasr_inflow_data_combine",
+            "FaaSServer": "My_GitHub_Account",
+            "Arguments": {
+                "config_set_name": "defaultV2",
+                "configure_run_file": "configure_run.yml"
+            },
+            "InvokeNext": "run_inflow"
+        },
+        "run_inflow": {
+            "FunctionName": "faasr_run_inflow_forecast",
+            "FaaSServer": "My_GitHub_Account",
+            "Arguments": {
+                "config_set_name": "defaultV2",
+                "configure_run_file": "configure_run.yml"
+            },
+            "InvokeNext": "run_flare"
+        },
+        "run_flare": {
+            "FunctionName": "faasr_run_flare",
+            "FaaSServer": "My_GitHub_Account",
+            "Arguments": {
+                "config_set_name": "defaultV2",
+                "configure_run_file": "configure_run.yml"
+            }
         }
+        
     },
     "ActionContainers": {
-        "faasr_flare_test": "ghcr.io/faasr/github-actions-tidyverse"
+        "start": "ghcr.io/faasr/github-actions-tidyverse",
+        "met_data": "ghcr.io/faasr/github-actions-tidyverse",
+        "inflow_data": "ghcr.io/faasr/github-actions-tidyverse",
+        "in_situ": "ghcr.io/faasr/github-actions-tidyverse",
+        "run_inflow": "ghcr.io/faasr/github-actions-tidyverse",
+        "run_flare": "ghcr.io/faasr/github-actions-tidyverse"
     },
     "FunctionGitHubPackage": {
-        "faasr_flare_test": "spark0510/FLAREr"
+        "faasr_in_situ_qaqc_csv": "spark0510/FLAREr",
+        "faasr_inflow_data_combine": "spark0510/FLAREr",
+        "faasr_met_data_bind": "spark0510/FLAREr",
+        "faasr_run_inflow_forecast": "spark0510/FLAREr",
+        "faasr_run_flare": "spark0510/FLAREr"
     },
     "FunctionCRANPackage": {
-        "faasr_flare_test": [
-            "lubridate",
-            "tidymodels",
-            "xgboost",
-            "RcppRoll"
-        ]
+        "faasr_in_situ_qaqc_csv": "lubridate",
+        "faasr_inflow_data_combine": "lubridate",
+        "faasr_met_data_bind": "lubridate",
+        "faasr_run_inflow_forecast": "lubridate",
+        "faasr_run_flare": "lubridate"
     },
     "FunctionGitRepo": {
         "faasr_flare_test": [
-            "spark0510/FCRE-forecast-code/workflows/defaultV2/",
+            "spark0510/FCRE-forecast-code/workflows/defaultV2/faasr/",
+            "spark0510/FCRE-forecast-code/R/"
+        ],
+        "faasr_in_situ_qaqc_csv": [
+            "spark0510/FCRE-forecast-code/workflows/defaultV2/faasr/",
+            "spark0510/FCRE-forecast-code/R/"
+        ],
+        "faasr_inflow_data_combine": [
+            "spark0510/FCRE-forecast-code/workflows/defaultV2/faasr/",
+            "spark0510/FCRE-forecast-code/R/"
+        ],
+        "faasr_met_data_bind": [
+            "spark0510/FCRE-forecast-code/workflows/defaultV2/faasr/",
+            "spark0510/FCRE-forecast-code/R/"
+        ],
+        "faasr_run_inflow_forecast": [
+            "spark0510/FCRE-forecast-code/workflows/defaultV2/faasr/",
+            "spark0510/FCRE-forecast-code/R/"
+        ],
+        "faasr_run_flare": [
+            "spark0510/FCRE-forecast-code/workflows/defaultV2/faasr/",
             "spark0510/FCRE-forecast-code/R/"
         ]
     },
-    "FunctionInvoke": "faasr_flare_test",
+    "FunctionInvoke": "start",
     "FaaSrLog": "FaaSrLog",
     "DefaultDataStore": "My_Minio_Bucket"
 }
