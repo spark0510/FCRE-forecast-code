@@ -1,5 +1,8 @@
 faasr_in_situ_qaqc_csv <- function(config_set_name, configure_run_file){
 
+  library(tidyverse)
+  library(lubridate)
+
   conf_files <- c("configure_flare.yml", "configure_run.yml", "depth_model_sd.csv", 
                   "glm3.nml", "observation_processing.yml", "observations_config.csv",
                   "parameter_calibration_config.csv", "states_config.csv")

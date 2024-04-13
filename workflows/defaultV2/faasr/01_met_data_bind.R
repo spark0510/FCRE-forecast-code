@@ -1,5 +1,8 @@
 faasr_met_data_bind <- function(config_set_name, configure_run_file){
 
+  library(tidyverse)
+  library(lubridate)
+
   conf_files <- c("configure_flare.yml", "configure_run.yml", "depth_model_sd.csv", 
                   "glm3.nml", "observation_processing.yml", "observations_config.csv",
                   "parameter_calibration_config.csv", "states_config.csv")
@@ -11,7 +14,6 @@ faasr_met_data_bind <- function(config_set_name, configure_run_file){
                         local_folder="configuration/defaultV2", 
                         local_file=conf_file)
   }    
-
 
   lake_directory <- here::here()
 
