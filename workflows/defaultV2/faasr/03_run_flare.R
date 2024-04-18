@@ -2,7 +2,7 @@ faasr_run_flare <- function(config_set_name, configure_run_file){
      
   library(tidyverse)
   library(lubridate)
-
+  a <- Sys.time()
   lake_directory <- here::here()
   setwd(lake_directory)
   forecast_site <- "fcre"
@@ -56,5 +56,15 @@ faasr_run_flare <- function(config_set_name, configure_run_file){
   noaa_ready <- FLAREr::check_noaa_present_arrow(lake_directory,
                                                   configure_run_file,
                                                   config_set_name = config_set_name)
+  b <- Sys.time()
+
+  readr::write_rds(a, "exec_start.RDS")
+  readr::write_rds(b, "exec_end.RDS")
+  FaaSr::faasr_put_file(remote_folder=paste0(.faasr$FaaSrLog, "/", .faasr$InvocationID, "/", .faasr$FunctionInvoke), 
+                          remote_file="exec_start.RDS", 
+                          local_file="exec_start.RDS")
+  FaaSr::faasr_put_file(remote_folder=paste0(.faasr$FaaSrLog, "/", .faasr$InvocationID, "/", .faasr$FunctionInvoke), 
+                          remote_file="exec_end.RDS", 
+                          local_file="exec_end.RDS")
 
 }

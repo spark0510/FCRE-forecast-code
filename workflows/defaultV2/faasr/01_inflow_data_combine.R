@@ -2,7 +2,7 @@ faasr_inflow_data_combine <- function(config_set_name, configure_run_file){
 
   library(tidyverse)
   library(lubridate)
-
+  a <- Sys.time()
   conf_files <- c("configure_flare.yml", "configure_run.yml", "depth_model_sd.csv", 
                   "glm3.nml", "observation_processing.yml", "observations_config.csv",
                   "parameter_calibration_config.csv", "states_config.csv")
@@ -56,4 +56,21 @@ faasr_inflow_data_combine <- function(config_set_name, configure_run_file){
                       cleaned_inflow_file,
                       use_s3 = config$run_config$use_s3,
                       config = config)
+
+  b <- Sys.time()
+
+  readr::write_rds(a, "exec_start.RDS")
+  readr::write_rds(b, "exec_end.RDS")
+  FaaSr::faasr_put_file(remote_folder=paste0(.faasr$FaaSrLog, "/", .faasr$InvocationID, "/", .faasr$FunctionInvoke), 
+                          remote_file="exec_start.RDS", 
+                          local_file="exec_start.RDS")
+  FaaSr::faasr_put_file(remote_folder=paste0(.faasr$FaaSrLog, "/", .faasr$InvocationID, "/", .faasr$FunctionInvoke), 
+                          remote_file="exec_end.RDS", 
+                          local_file="exec_end.RDS")
+
+  d <- Sys.time()
+  readr::write_rds(d, "trigger.RDS")
+  FaaSr::faasr_put_file(remote_folder=paste0(.faasr$FaaSrLog, "/", .faasr$InvocationID, "/", .faasr$FunctionInvoke), 
+                          remote_file="trigger.RDS", 
+                          local_file="trigger.RDS")
 }

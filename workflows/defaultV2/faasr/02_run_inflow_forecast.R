@@ -3,7 +3,7 @@ faasr_run_inflow_forecast <- function(config_set_name, configure_run_file){
 
   library(tidyverse)
   library(lubridate)
-
+  a <- Sys.time()
   lake_directory <- here::here()
 
   conf_files <- c("configure_flare.yml", "configure_run.yml", "depth_model_sd.csv", 
@@ -62,4 +62,21 @@ faasr_run_inflow_forecast <- function(config_set_name, configure_run_file){
     message("An inflow forecasts was not needed because the forecast horizon was 0 in run configuration file")
 
   }
+
+  b <- Sys.time()
+
+  readr::write_rds(a, "exec_start.RDS")
+  readr::write_rds(b, "exec_end.RDS")
+  FaaSr::faasr_put_file(remote_folder=paste0(.faasr$FaaSrLog, "/", .faasr$InvocationID, "/", .faasr$FunctionInvoke), 
+                          remote_file="exec_start.RDS", 
+                          local_file="exec_start.RDS")
+  FaaSr::faasr_put_file(remote_folder=paste0(.faasr$FaaSrLog, "/", .faasr$InvocationID, "/", .faasr$FunctionInvoke), 
+                          remote_file="exec_end.RDS", 
+                          local_file="exec_end.RDS")
+
+  d <- Sys.time()
+  readr::write_rds(d, "trigger.RDS")
+  FaaSr::faasr_put_file(remote_folder=paste0(.faasr$FaaSrLog, "/", .faasr$InvocationID, "/", .faasr$FunctionInvoke), 
+                          remote_file="trigger.RDS", 
+                          local_file="trigger.RDS")
 }
